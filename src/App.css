@@ -1,38 +1,103 @@
 .App {
-  text-align: center;
+  margin: 0;
+  padding: 0;
+  margin-top: 8%;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+input {
+  border: none;
+  background: transparent;
+  font-size: 1.4rem;
+  font-weight: 500;
+  margin-left: 5%;
+  padding-left: 10px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  width: calc(90% - 20px);
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+.selected-courses {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  overflow: scroll;
+  gap: 15px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.selected-courses::-webkit-scrollbar {
+  display: none;
+}
+
+.course {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-direction: row;
+  padding: 3%;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  border-radius: 10px;
+  font-weight: 600;
+  background: #ededed;
+  gap: 20px;
+}
+
+.course h2 {
+  font-size: 1.3rem;
+  font-weight: 400;
+  margin: 0;
+  padding: 0;
+  margin-bottom: 2px;
+  opacity: 0.3;
+}
+
+.course:first-of-type {
+  margin-left: 5%;
+}
+
+.multiselect {
+  background: #ededed;
+  border-radius: 15px;
+  height: 40px;
+  margin-left: 5%;
+  margin-top: 15px;
+  padding-top: 5px;
+  padding-left: 5px;
+  width: calc(90% - 10px);
+  /* box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1); */
+}
+
+.multiselect .select-box {
+  position: relative;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  height: calc(100% - 5px);
+  width: calc(79% / var(--number-of-states));
+  border-radius: 12px;
+  background: white;
+  margin-left: calc(var(--multiselect-state) * (100% / (var(--number-of-states)) - 1px));
+  transition: all 0.3s ease;
+}
+
+.multiselect .icons {
+  display: flex;
+  align-items: space-between;
+  justify-content: space-between;
+  height: 100%;
+  width: calc(100% - 5px);
+  font-size: 1.2rem;
+  transform: translateY(-37px);
+}
+
+.multiselect .icons .icon {
+  width: 100%;
+  display: flex;
   align-items: center;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
-}
-
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
 }
