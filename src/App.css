@@ -9,12 +9,12 @@ input {
   background: transparent;
   font-size: 1.4rem;
   font-weight: 500;
-  margin-left: 5%;
+  margin-left: 6%;
   padding-left: 10px;
   padding-top: 5px;
   padding-bottom: 5px;
   border-radius: 10px;
-  margin-bottom: 10px;
+  margin-bottom: 14px;
   width: calc(90% - 20px);
 }
 
@@ -56,6 +56,10 @@ input {
 
 .course:first-of-type {
   margin-left: 5%;
+}
+
+.course:last-of-type {
+  margin-right: 5%;
 }
 
 .multiselect {

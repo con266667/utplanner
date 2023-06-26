@@ -31,10 +31,6 @@ function App() {
     // fetchCourses();
   }, []);
 
-  function multiselectClick(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
-    console.log(event);
-  }
-
   return (
     <div className="App">
       <input type="text" placeholder='Search' />
@@ -46,8 +42,9 @@ function App() {
             <h2>×</h2>
           </div>)
         })}
+        <div>⠀</div>
       </div>
-      <div className='multiselect' onClick={multiselectClick}>
+      <div className='multiselect'>
         <div className='select-box' style={{ "--multiselect-state": multiselectState, "--number-of-states": 3 } as React.CSSProperties}></div>
         <div className='icons'>
           <div className='icon' onClick={()=>setMultiselectState(0)}>
