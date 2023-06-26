@@ -9,7 +9,7 @@ input {
   background: transparent;
   font-size: 1.4rem;
   font-weight: 500;
-  margin-left: 6%;
+  margin-left: calc(5% + 5px);
   padding-left: 10px;
   padding-top: 5px;
   padding-bottom: 5px;
@@ -31,10 +31,10 @@ input {
   display: none;
 }
 
-.course {
+.selected-courses .course {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: space-evenly;
   flex-direction: row;
   padding: 3%;
   padding-top: 5px;
@@ -45,7 +45,7 @@ input {
   gap: 20px;
 }
 
-.course h2 {
+.selected-courses .course h2 {
   font-size: 1.3rem;
   font-weight: 400;
   margin: 0;
@@ -54,11 +54,11 @@ input {
   opacity: 0.3;
 }
 
-.course:first-of-type {
+.selected-courses .course:first-of-type {
   margin-left: 5%;
 }
 
-.course:last-of-type {
+.selected-courses .course:last-of-type {
   margin-right: 5%;
 }
 
@@ -104,4 +104,68 @@ input {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.searched-courses {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+  margin-left: 5%;
+  width: calc(90% - 10px);
+}
+
+.searched-courses .course {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 50pt;
+  padding: 0;
+  padding-top: 5pt;
+  padding-bottom: 5pt;
+  transition: all 0.3s ease-in-out;
+}
+
+.searched-courses .course .info {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  justify-content: center;
+}
+
+.searched-courses .course h2 {
+  margin: 0;
+  padding: 0;
+  margin-left: 5px;
+  font-size: 1rem;
+}
+
+.searched-courses .course p {
+  margin: 0;
+  padding: 0;
+  margin-left: 5px;
+  margin-top: 3px;
+  font-size: 0.8rem;
+  color: #777;
+}
+
+.searched-courses .add {
+  padding: 0 10px;
+}
+
+.searched-courses hr {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  margin-left: 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 5px;
+}
+
+.invisible {
+  display: none;
 }

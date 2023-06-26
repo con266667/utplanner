@@ -7,7 +7,9 @@ import ListFilled from './icons/Week';
 
 function App() {
   const [multiselectState, setMultiselectState] = React.useState(0);
-  
+  const [searchedCourses, setSearchedCourses] = React.useState<any[]>([]); // [{code: "ESC180", title: "Introduction to Programming for Engineers", ...}
+  const [selectedCourseCodes, setSelectedCourseCodes] = React.useState<string[]>([]);
+
   const fetchCourses = async () => {
     const response = await fetch('api/get_courses', {
       method: 'POST',
@@ -20,30 +22,81 @@ function App() {
     console.log(json);
   };
 
-  const selectedCourses = [
-    "ESC180",
-    "ESC190",
-    "ESC194",
-    "ESC195",
-  ]
+  let cachedSearches: {[key: string]: any} = {};
+
+  const searchCourses = async (search: string) => {
+    if (search === "") {
+      setSearchedCourses([]);
+      return;
+    }
+
+    let params = new URLSearchParams();
+    params.append("term", search);
+    params.set("upperThreshold", "200");
+    params.set("lowerThreshold", "50");
+    params.set("divisions", "APSC");
+
+    if (cachedSearches[params.toString()]) {
+      setSearchedCourses(cachedSearches[params.toString()]);
+      return;
+    }
+
+    const response = await fetch('api/search_courses?' + params.toString());
+    const json = (await response.json()).payload.codesAndTitles;
+    cachedSearches[params.toString()] = json;
+    setSearchedCourses(json);
+  }
+
+  function onSearchInput(event: React.ChangeEvent<HTMLInputElement>) {
+    searchCourses(event.target.value);
+  }
 
   useEffect(() => {
     // fetchCourses();
+    // searchCourses("ESC");
   }, []);
+
+  function courseClicked(course: string) {
+    if (selectedCourseCodes.includes(course)) {
+      setSelectedCourseCodes(selectedCourseCodes.filter((c) => c !== course));
+    } else {
+      setSelectedCourseCodes([...selectedCourseCodes, course]);
+    }
+    console.log(selectedCourseCodes);
+  }
 
   return (
     <div className="App">
-      <input type="text" placeholder='Search' />
-      <div className='selected-courses'>
-        {selectedCourses.map((course) => {
+      <input type="text" placeholder='Search' onInput={onSearchInput} />
+      <div className={`selected-courses ${selectedCourseCodes.length == 0 ? 'invisible' : ''}`} >
+        {selectedCourseCodes.map((course) => {
           return (
           <div key={course} className='course'>
             <span>{course}</span>
-            <h2>×</h2>
+            <h2 onClick={()=>courseClicked(course)}>×</h2>
           </div>)
         })}
         <div>⠀</div>
       </div>
+
+      <div className='searched-courses'>
+        {searchedCourses.map((course) => {
+          return <div key={course.code}>
+              <div className="course">
+                <div className="info">
+                  <h2>{course.name}</h2>
+                  <p>{course.code}</p>
+                </div>
+                  <button className="add" onClick={()=>courseClicked(course.code)}>{
+                    selectedCourseCodes.includes(course.code) ? "Remove" : "Add"
+                  } </button>
+              </div>
+              <hr />
+            </div>
+        }
+        )}
+      </div>
+
       <div className='multiselect'>
         <div className='select-box' style={{ "--multiselect-state": multiselectState, "--number-of-states": 3 } as React.CSSProperties}></div>
         <div className='icons'>
