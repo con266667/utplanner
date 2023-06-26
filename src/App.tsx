@@ -30,6 +30,27 @@ function App() {
       return;
     }
 
+    // // DEV
+    // setSearchedCourses([
+    //   {
+    //     "code": "ESC180",
+    //     "name": "Introduction to Programming for Engineers",
+    //   },
+    //   {
+    //     "code": "ESC190",
+    //     "name": "DSA",
+    //   },
+    //   {
+    //     "code": "ESC195",
+    //     "name": "Calculus II",
+    //   },
+    //   {
+    //     "code": "ESC200",
+    //     "name": "Introduction to Programming for Engineers",
+    //   },
+    // ]);
+    // return;
+
     let params = new URLSearchParams();
     params.append("term", search);
     params.set("upperThreshold", "200");
@@ -50,11 +71,6 @@ function App() {
   function onSearchInput(event: React.ChangeEvent<HTMLInputElement>) {
     searchCourses(event.target.value);
   }
-
-  useEffect(() => {
-    // fetchCourses();
-    // searchCourses("ESC");
-  }, []);
 
   function courseClicked(course: string) {
     if (selectedCourseCodes.includes(course)) {
@@ -81,7 +97,7 @@ function App() {
 
       <div className='searched-courses'>
         {searchedCourses.map((course) => {
-          return <div key={course.code}>
+          return <React.Fragment key={course.code}>
               <div className="course">
                 <div className="info">
                   <h2>{course.name}</h2>
@@ -92,7 +108,7 @@ function App() {
                   } </button>
               </div>
               <hr />
-            </div>
+            </React.Fragment>
         }
         )}
       </div>
