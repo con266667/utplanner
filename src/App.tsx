@@ -30,27 +30,6 @@ function App() {
       return;
     }
 
-    // // DEV
-    // setSearchedCourses([
-    //   {
-    //     "code": "ESC180",
-    //     "name": "Introduction to Programming for Engineers",
-    //   },
-    //   {
-    //     "code": "ESC190",
-    //     "name": "DSA",
-    //   },
-    //   {
-    //     "code": "ESC195",
-    //     "name": "Calculus II",
-    //   },
-    //   {
-    //     "code": "ESC200",
-    //     "name": "Introduction to Programming for Engineers",
-    //   },
-    // ]);
-    // return;
-
     let params = new URLSearchParams();
     params.append("term", search);
     params.set("upperThreshold", "200");
@@ -63,7 +42,16 @@ function App() {
     }
 
     const response = await fetch('api/search_courses?' + params.toString());
-    const json = (await response.json()).payload.codesAndTitles;
+    let json = (await response.json()).payload.codesAndTitles;
+
+    // Remove duplicates
+
+    json = json.filter((course: any, index: number, self: any[]) =>
+      index === self.findIndex((c: any) => (
+        c.code === course.code
+      ))
+    );
+
     cachedSearches[params.toString()] = json;
     setSearchedCourses(json);
   }
@@ -78,26 +66,24 @@ function App() {
     } else {
       setSelectedCourseCodes([...selectedCourseCodes, course]);
     }
-    console.log(selectedCourseCodes);
   }
 
   return (
     <div className="App">
       <input type="text" placeholder='Search' onInput={onSearchInput} />
       <div className={`selected-courses ${selectedCourseCodes.length == 0 ? 'invisible' : ''}`} >
-        {selectedCourseCodes.map((course) => {
-          return (
+        {selectedCourseCodes.map((course) =>
           <div key={course} className='course'>
             <span>{course}</span>
             <h2 onClick={()=>courseClicked(course)}>×</h2>
-          </div>)
-        })}
+          </div>
+        )}
         <div>⠀</div>
       </div>
 
       <div className='searched-courses'>
-        {searchedCourses.map((course) => {
-          return <React.Fragment key={course.code}>
+        {searchedCourses.map((course) => 
+          <React.Fragment key={course.code}>
               <div className="course">
                 <div className="info">
                   <h2>{course.name}</h2>
@@ -109,7 +95,6 @@ function App() {
               </div>
               <hr />
             </React.Fragment>
-        }
         )}
       </div>
 
