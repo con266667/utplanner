@@ -1,14 +1,15 @@
-import React, { useEffect } from 'react';
-import logo from './logo.svg';
+import React, { useRef } from 'react';
 import './App.css';
 import Menu3Filled from './icons/List';
 import Menu7Filled from './icons/Menu';
 import ListFilled from './icons/Week';
+import Timetable from './Timetable';
 
 function App() {
   const [multiselectState, setMultiselectState] = React.useState(0);
   const [searchedCourses, setSearchedCourses] = React.useState<any[]>([]); // [{code: "ESC180", title: "Introduction to Programming for Engineers", ...}
   const [selectedCourseCodes, setSelectedCourseCodes] = React.useState<string[]>([]);
+  const timetableRef = useRef<any>();
 
   const fetchCourses = async () => {
     const response = await fetch('api/get_courses', {
@@ -19,7 +20,6 @@ function App() {
       body: JSON.stringify({"courseCodeAndTitleProps":{"courseCode":"","courseTitle":"","courseSectionCode":""},"departmentProps":[{"division":"APSC","department":"Division of Engineering Science","type":"DEPARTMENT"}],"campuses":[],"sessions":["20239"],"requirementProps":[],"instructor":"","courseLevels":["200/B"],"deliveryModes":[],"dayPreferences":[],"timePreferences":[],"divisions":["APSC"],"creditWeights":[],"direction":"asc"})
     });
     const json = await response.json();
-    console.log(json);
   };
 
   let cachedSearches: {[key: string]: any} = {};
@@ -29,6 +29,20 @@ function App() {
       setSearchedCourses([]);
       return;
     }
+
+    // // DEV
+    // setSearchedCourses([
+    //   {
+    //     "code": "ESC180",
+    //     "name": "Introduction to Programming",
+    //   },
+    //   {
+    //     "code": "ESC190",
+    //     "name": "Data Structures and Algorithms",
+    //   }
+    // ]);
+    // return;
+
 
     let params = new URLSearchParams();
     params.append("term", search);
@@ -43,8 +57,6 @@ function App() {
 
     const response = await fetch('api/search_courses?' + params.toString());
     let json = (await response.json()).payload.codesAndTitles;
-
-    // Remove duplicates
 
     json = json.filter((course: any, index: number, self: any[]) =>
       index === self.findIndex((c: any) => (
@@ -62,8 +74,10 @@ function App() {
 
   function courseClicked(course: string) {
     if (selectedCourseCodes.includes(course)) {
+      timetableRef.current?.updateTimetable(selectedCourseCodes.filter((c) => c !== course));
       setSelectedCourseCodes(selectedCourseCodes.filter((c) => c !== course));
     } else {
+      timetableRef.current?.updateTimetable([...selectedCourseCodes, course]);
       setSelectedCourseCodes([...selectedCourseCodes, course]);
     }
   }
@@ -71,7 +85,7 @@ function App() {
   return (
     <div className="App">
       <input type="text" placeholder='Search' onInput={onSearchInput} />
-      <div className={`selected-courses ${selectedCourseCodes.length == 0 ? 'invisible' : ''}`} >
+      <div className={`selected-courses ${selectedCourseCodes.length === 0 ? 'invisible' : ''}`} >
         {selectedCourseCodes.map((course) =>
           <div key={course} className='course'>
             <span>{course}</span>
@@ -98,7 +112,7 @@ function App() {
         )}
       </div>
 
-      <div className='multiselect'>
+      <div className={`multiselect ${selectedCourseCodes.length === 0 ? 'invisible' : ''}`}>
         <div className='select-box' style={{ "--multiselect-state": multiselectState, "--number-of-states": 3 } as React.CSSProperties}></div>
         <div className='icons'>
           <div className='icon' onClick={()=>setMultiselectState(0)}>
@@ -112,6 +126,8 @@ function App() {
           </div>
         </div>
       </div>
+
+      <Timetable timetableType={multiselectState} ref={timetableRef} />
     </div>
   );
 }

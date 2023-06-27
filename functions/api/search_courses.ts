@@ -1,5 +1,4 @@
 export const onRequestGet = async (context) => {
-    console.log(context.request.url.split("?")[1]);
     const init = {
       headers: {
           "content-type": "application/json;charset=UTF-8",
