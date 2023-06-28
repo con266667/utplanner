@@ -1,6 +1,7 @@
 import React, { forwardRef, useEffect, useImperativeHandle } from 'react';
 import './Timetable.css';
 import './TimetableListView.css';
+import { Course } from './Course';
 
 const Timetable = forwardRef((props: any, ref: any) => {
     let [events, setEvents] = React.useState<any[]>([]);
@@ -32,7 +33,7 @@ const Timetable = forwardRef((props: any, ref: any) => {
     }
 
     async function loadCourses(courseCodes: string[]) {
-        let courses: any[] = [];
+        let courses: Course[] = [];
         for (let courseCode of courseCodes) {
             let res = await fetch('api/get_courses', {
                 method: 'POST',
@@ -49,6 +50,7 @@ const Timetable = forwardRef((props: any, ref: any) => {
     }
 
     async function setupTimetable(courseCodes: string[]) {
+        console.log(courseCodes);
         let courses = await loadCourses(courseCodes);
         events = [];
         for (let course of courses) {
@@ -69,6 +71,10 @@ const Timetable = forwardRef((props: any, ref: any) => {
             }
         }
         events.sort((a, b) => a.startMillis - b.startMillis);
+        let _schedule = schedule(courses);
+        console.log(_schedule.cost);
+        events = events.filter((event) => _schedule.data[event.courseCode][event.type].sectionNumber === event.sectionNumber);
+        events = events.filter((event, index, self) => self.findIndex((e) => e.courseCode === event.courseCode && e.type === event.type && e.sectionNumber === event.sectionNumber && e.startMillis === event.startMillis && e.day === event.day) === index);
         setEvents(Object.assign([], events));
     }
 
@@ -83,8 +89,9 @@ const Timetable = forwardRef((props: any, ref: any) => {
     }
 
     useEffect(() => {
-        // setupTimetable(["MAT185H1"]);
+        // setupTimetable(["MAT185H1", "ESC102H1", "ESC190H1", "ESC195H1", "MSE160H1", "ECE159H1"]);
         // console.log("Timetable mounted");
+        // debug();
         return () => {
             // console.log("Timetable unmounted");
         }
@@ -92,7 +99,6 @@ const Timetable = forwardRef((props: any, ref: any) => {
 
     return (
         <div className="timetable">
-
             {
                 props.timetableType === 0 &&
                 <div className="list-view">
@@ -119,5 +125,120 @@ const Timetable = forwardRef((props: any, ref: any) => {
         </div>
     );
 });
+
+// type Events = Map<number, any[]>;
+
+function numberOfCollisions(events: any[]) {
+    let collisions = 0;
+    for (let i = 0; i < events.length; i++) {
+        for (let j = i + 1; j < events.length; j++) {
+            if (events[i].day === events[j].day && events[i].startMillis < events[j].endMillis && events[i].endMillis > events[j].startMillis) {
+                collisions++;
+            }
+        }
+    }
+    return collisions;
+}
+
+function allEventsInSchedule(courses: Course[], schedule: Schedule) {
+    let events: any[] = [];
+    let eventIds = new Set<string>();
+    for (let course of courses) {
+        for (let section of course.sections) {
+            for (let meetingTime of section.meetingTimes) {
+                if (schedule.data[course.code][section.type].sectionNumber === section.sectionNumber) {
+                    if (!eventIds.has(course.code + section.type + section.sectionNumber + meetingTime.start.millisofday + meetingTime.end.millisofday + meetingTime.start.day)) {
+                        events.push({
+                            "startMillis": meetingTime.start.millisofday,
+                            "endMillis": meetingTime.end.millisofday,
+                            "day": meetingTime.start.day,
+                        });
+                        eventIds.add(course.code + section.type + section.sectionNumber + meetingTime.start.millisofday + meetingTime.end.millisofday + meetingTime.start.day);
+                    }
+                }
+            }
+        }
+    }
+    return events;
+}
+
+function cost(courses: Course[], schedule: Schedule, costCache: Map<string, number>) {
+    let scheduleString = JSON.stringify(schedule);
+    if (!costCache.has(scheduleString)) {
+        costCache.set(scheduleString, numberOfCollisions(allEventsInSchedule(courses, schedule)));
+    }
+    return costCache.get(scheduleString)!;
+}
+
+function iterateSchedule(schedule: Schedule) {
+    let newSchedule = Object.assign({}, schedule);
+    let randomCourseCode = Object.keys(newSchedule.data)[Math.floor(Math.random() * Object.keys(newSchedule.data).length)];
+    let randomSectionType = Object.keys(newSchedule.data[randomCourseCode])[Math.floor(Math.random() * Object.keys(newSchedule.data[randomCourseCode]).length)];
+    let currentSectionCode = newSchedule.data[randomCourseCode][randomSectionType].sectionNumber;
+    let randomOtherSectionCode = newSchedule.data[randomCourseCode][randomSectionType].otherSectionNumbers[Math.floor(Math.random() * newSchedule.data[randomCourseCode][randomSectionType].otherSectionNumbers.length)];
+    
+    if (randomOtherSectionCode === undefined) {
+        return newSchedule;
+    }
+    
+    newSchedule.data[randomCourseCode][randomSectionType].sectionNumber = randomOtherSectionCode;
+    newSchedule.data[randomCourseCode][randomSectionType].otherSectionNumbers = newSchedule.data[randomCourseCode][randomSectionType].otherSectionNumbers.filter((otherSectionNumber) => otherSectionNumber !== randomOtherSectionCode);
+    newSchedule.data[randomCourseCode][randomSectionType].otherSectionNumbers.push(currentSectionCode);
+    return newSchedule;
+}
+
+function buildRandomSchedule(courses: Course[], costCache: Map<string, number>) {
+    let schedule: Schedule = {
+        cost: 0,
+        data: {}
+    };
+    for (let course of courses) {
+        schedule.data[course.code] = {};
+        for (let section of course.sections) {
+            if (!schedule.data[course.code].hasOwnProperty(section.type)) {
+                schedule.data[course.code][section.type] = {
+                    sectionNumber: section.sectionNumber,
+                    otherSectionNumbers: course.sections.filter((otherSection) => otherSection.type === section.type).map((otherSection) => otherSection.sectionNumber).filter((otherSectionCode) => otherSectionCode !== section.sectionNumber)
+                };
+            }
+        }
+    }
+    schedule.cost = cost(courses, schedule, costCache);
+    return schedule;
+}
+
+function schedule(courses: Course[]) {
+    let bestSchedule = buildRandomSchedule(courses, new Map());
+    let costCache = new Map();
+    costCache.set(JSON.stringify(bestSchedule), bestSchedule.cost);
+    
+    for (let i = 0; i < 10; i++) { // Number of generations
+        let bestOfPrevGen = JSON.parse(JSON.stringify(bestSchedule));
+        for (let j = 0; j < 4; j++) { // Number of schedules per generation
+            let newSchedule = JSON.parse(JSON.stringify(bestOfPrevGen));
+            for (let k = 0; k < 100; k++) { // Number of iterations per generation
+                newSchedule = iterateSchedule(JSON.parse(JSON.stringify(newSchedule)));
+                newSchedule.cost = cost(courses, newSchedule, costCache);
+                if (newSchedule.cost < bestSchedule.cost) {
+                    bestSchedule = Object.assign({}, newSchedule);
+                }
+            }
+        }
+    }
+
+    return bestSchedule;
+}
+
+type Schedule = {
+    cost: number,
+    data: {
+        [courseCode: string]: {
+            [sectionType: string]: {
+                sectionNumber: string,
+                otherSectionNumbers: string[]
+            }
+        }
+    }
+}; // Map<courseCode, Map<sectionType, {}>>
 
 export default Timetable;

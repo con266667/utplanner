@@ -12,3 +12,11 @@ import React from 'react'
 </svg>
 </>
 )}
+
+/*
+IF YOU WANT A SQUARE
+
+<svg width="24" height="24" viewBox="2.4 5.1 5 0.01" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path fill="black" d="M4 3C3.44772 3 3 3.44772 3 4V6C3 6.55228 3.44772 7 4 7H6C6.55228 7 7 6.55228 7 6V4C7 3.44772 6.55228 3 6 3H4Z" clipRule="evenodd" fillRule="evenodd"></path>
+</svg>
+*/

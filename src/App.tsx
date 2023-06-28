@@ -84,7 +84,7 @@ function App() {
 
   return (
     <div className="App">
-      <input type="text" placeholder='Search' onInput={onSearchInput} />
+      <input type="text" placeholder='Search Courses' onInput={onSearchInput} />
       <div className={`selected-courses ${selectedCourseCodes.length === 0 ? 'invisible' : ''}`} >
         {selectedCourseCodes.map((course) =>
           <div key={course} className='course'>
