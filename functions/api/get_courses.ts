@@ -9,14 +9,11 @@ export const onRequestPost = async (context) => {
   myHeaders.append("Accept", "application/json, text/plain, */*");
   myHeaders.append("Content-Type", "application/json");
 
-  var requestJson = await context.request.json()
-  var requestOptions = {
+  var response = await fetch("https://api.easi.utoronto.ca/ttb/getCourses", {
       method: 'POST',
       headers: myHeaders,
-      body: JSON.stringify(requestJson),
-  };
-
-  var response = await fetch("https://api.easi.utoronto.ca/ttb/getCourses", requestOptions)
+      body: JSON.stringify(await context.request.json())
+  })
   var json = JSON.stringify(await response.json());
   return new Response(json, init);
 

@@ -1,26 +1,18 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import './App.css';
 import Menu3Filled from './icons/List';
 import Menu7Filled from './icons/Menu';
 import ListFilled from './icons/Week';
 import Timetable from './Timetable';
+import { click } from '@testing-library/user-event/dist/click';
+import { useLocalStorage } from 'usehooks-ts';
 
 function App() {
-  const [multiselectState, setMultiselectState] = React.useState(0);
-  const [searchedCourses, setSearchedCourses] = React.useState<any[]>([]); // [{code: "ESC180", title: "Introduction to Programming for Engineers", ...}
-  const [selectedCourseCodes, setSelectedCourseCodes] = React.useState<string[]>([]);
+  const [multiselectState, setMultiselectState] = useState(0);
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [searchedCourses, setSearchedCourses] = useState<any[]>([]); // [{code: "ESC180", title: "Introduction to Programming for Engineers", ...}
+  const [selectedCourseCodes, setSelectedCourseCodes] = useLocalStorage<string[]>('selectedCourseCodes', []);
   const timetableRef = useRef<any>();
-
-  const fetchCourses = async () => {
-    const response = await fetch('api/get_courses', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({"courseCodeAndTitleProps":{"courseCode":"","courseTitle":"","courseSectionCode":""},"departmentProps":[{"division":"APSC","department":"Division of Engineering Science","type":"DEPARTMENT"}],"campuses":[],"sessions":["20239"],"requirementProps":[],"instructor":"","courseLevels":["200/B"],"deliveryModes":[],"dayPreferences":[],"timePreferences":[],"divisions":["APSC"],"creditWeights":[],"direction":"asc"})
-    });
-    const json = await response.json();
-  };
 
   let cachedSearches: {[key: string]: any} = {};
 
@@ -70,6 +62,12 @@ function App() {
 
   function onSearchInput(event: React.ChangeEvent<HTMLInputElement>) {
     searchCourses(event.target.value);
+    setSearchTerm(event.target.value);
+  }
+
+  function clearSearch() {
+    searchCourses("");
+    setSearchTerm("");
   }
 
   function courseClicked(course: string) {
@@ -84,7 +82,8 @@ function App() {
 
   return (
     <div className="App">
-      <input type="text" placeholder='Search Courses' onInput={onSearchInput} />
+      <input value={searchTerm} type="text" id='' placeholder='Search Courses' onInput={onSearchInput} />
+      <h2 className={`search-clear ${searchedCourses.length===0 ? 'invisible' : ''}`} onClick={clearSearch}>×</h2>
       <div className={`selected-courses ${selectedCourseCodes.length === 0 ? 'invisible' : ''}`} >
         {selectedCourseCodes.map((course) =>
           <div key={course} className='course'>

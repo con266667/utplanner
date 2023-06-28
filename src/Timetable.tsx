@@ -1,10 +1,11 @@
-import React, { forwardRef, useEffect, useImperativeHandle } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import './Timetable.css';
 import './TimetableListView.css';
 import { Course } from './Course';
+import { useLocalStorage } from 'usehooks-ts';
 
 const Timetable = forwardRef((props: any, ref: any) => {
-    let [events, setEvents] = React.useState<any[]>([]);
+    let [events, setEvents] = useLocalStorage<any[]>('events', []);
 
     useImperativeHandle(ref, () => ({
         updateTimetable: (courseCodes: string[]) => {
@@ -50,7 +51,10 @@ const Timetable = forwardRef((props: any, ref: any) => {
     }
 
     async function setupTimetable(courseCodes: string[]) {
-        console.log(courseCodes);
+        if (courseCodes.length === 0) {
+            setEvents([]);
+            return;
+        }
         let courses = await loadCourses(courseCodes);
         events = [];
         for (let course of courses) {
@@ -87,15 +91,6 @@ const Timetable = forwardRef((props: any, ref: any) => {
         let minutesString = minutes < 10 ? '0' + minutes : minutes;
         return hours + ':' + minutesString + ' ' + ampm;
     }
-
-    useEffect(() => {
-        // setupTimetable(["MAT185H1", "ESC102H1", "ESC190H1", "ESC195H1", "MSE160H1", "ECE159H1"]);
-        // console.log("Timetable mounted");
-        // debug();
-        return () => {
-            // console.log("Timetable unmounted");
-        }
-    }, []);
 
     return (
         <div className="timetable">
