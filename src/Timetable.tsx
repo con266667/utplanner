@@ -1,17 +1,36 @@
-import React, { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle } from 'react';
 import './Timetable.css';
 import './TimetableListView.css';
+import './TimetableWeekView.css';
+import './TimetableDayView.css';
 import { Course } from './Course';
 import { useLocalStorage } from 'usehooks-ts';
 
 const Timetable = forwardRef((props: any, ref: any) => {
     let [events, setEvents] = useLocalStorage<any[]>('events', []);
+    let [dayViewSelectedDay, setDayViewSelectedDay] = useLocalStorage<number>('dayViewSelectedDay', 1);
+
+    let allTimes = [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
 
     useImperativeHandle(ref, () => ({
         updateTimetable: (courseCodes: string[]) => {
             setupTimetable(courseCodes);
         }
     }));
+
+    function hourToTimeString(hour: number) {
+        if (hour === 12) {
+            return "12";
+        }
+        if (hour > 12) {
+            return (hour - 12) + "";
+        }
+        return hour + "";
+    }
+
+    function millisOfDayToHour(millisOfDay: number) {
+        return Math.floor(millisOfDay / 3600000);
+    }
 
     function allDaysInSchedule() {
         return events.map((event) => event.day).filter((day, index, self) => self.indexOf(day) === index).sort();
@@ -31,6 +50,10 @@ const Timetable = forwardRef((props: any, ref: any) => {
                 return "Friday";
         }
         return "";
+    }
+
+    function dayNumberToShortDayName(dayNumber: number) {
+        return dayNumberToDayName(dayNumber).substring(0, 3);
     }
 
     async function loadCourses(courseCodes: string[]) {
@@ -92,6 +115,10 @@ const Timetable = forwardRef((props: any, ref: any) => {
         return hours + ':' + minutesString + ' ' + ampm;
     }
 
+    useEffect(() => {
+        // setupTimetable(["MAT185H1", "ESC102H1", "ESC190H1", "ESC195H1", "MSE160H1", "ECE159H1"]);
+    }, []);
+
     return (
         <div className="timetable">
             {
@@ -115,6 +142,88 @@ const Timetable = forwardRef((props: any, ref: any) => {
                         )
                     })
                     }
+                </div>
+            }
+
+            {
+                props.timetableType === 1 &&
+                <div className="week-view">
+                    <div className="times">
+                    {
+                        allTimes.map((time) => {
+                            return (
+                                <div className="time" key={time}>
+                                    <h2>{hourToTimeString(time)}</h2>
+                                    <hr/>
+                                </div>
+                            )
+                        })
+                    }
+                    </div>
+                    <div className='events'>
+                        {
+                            allDaysInSchedule().map((day) => {
+                                return (
+                                    <div className="day" key={day}>
+                                        <h2>{dayNumberToShortDayName(day).toUpperCase()}</h2>
+                                        {
+                                            allTimes.map((time) => 
+                                                <div className='events-holder' key={time}>
+                                                    {
+                                                        events.filter((event) => event.day === day && time === millisOfDayToHour(event.startMillis)).map((event) => 
+                                                            <div className="event" key={JSON.stringify(event)}>
+                                                                <h3>{event.courseCode.substring(0,6)}</h3>
+                                                                <h4>{event.name}</h4>
+                                                            </div>
+                                                        )
+                                                    }
+                                                </div>
+                                            )
+                                        }
+                                    </div>
+                                )
+                            })
+                        }
+                    </div>
+                </div>
+            }
+
+            {
+                props.timetableType === 2 &&
+                <div className="day-view">
+                    <div className='header'>
+                        <button className={`${dayViewSelectedDay <= 1 ? 'invisible': ''}`} onClick={()=>setDayViewSelectedDay((d)=>--d)}>‹</button>
+                        <h1>{dayNumberToDayName(dayViewSelectedDay)}</h1>
+                        <button className={`${dayViewSelectedDay >= 5 ? 'invisible': ''}`} onClick={()=>setDayViewSelectedDay((d)=>++d)}>›</button>
+                    </div>
+                    <div className='times'>
+                        {
+                            allTimes.map((time) => {
+                                return (
+                                    <div className="time" key={time}>
+                                        <h2>{hourToTimeString(time)}</h2>
+                                        <hr/>
+                                    </div>
+                                )
+                            })
+                        }
+                    </div>
+                    <div className='events'>
+                    {
+                        allTimes.map((time) => 
+                            <div className='events-holder' key={time}>
+                                {
+                                    events.filter((event) => event.day === dayViewSelectedDay && time === millisOfDayToHour(event.startMillis)).map((event) => 
+                                        <div className="event" key={JSON.stringify(event)}>
+                                            <h3>{event.courseName}</h3>
+                                            <h4>{event.name}</h4>
+                                        </div>
+                                    )
+                                }
+                            </div>
+                        )
+                    }
+                    </div>
                 </div>
             }
         </div>
@@ -166,7 +275,7 @@ function cost(courses: Course[], schedule: Schedule, costCache: Map<string, numb
 }
 
 function iterateSchedule(schedule: Schedule) {
-    let newSchedule = Object.assign({}, schedule);
+    let newSchedule = JSON.parse(JSON.stringify(schedule)) as Schedule;
     let randomCourseCode = Object.keys(newSchedule.data)[Math.floor(Math.random() * Object.keys(newSchedule.data).length)];
     let randomSectionType = Object.keys(newSchedule.data[randomCourseCode])[Math.floor(Math.random() * Object.keys(newSchedule.data[randomCourseCode]).length)];
     let currentSectionCode = newSchedule.data[randomCourseCode][randomSectionType].sectionNumber;
@@ -187,6 +296,7 @@ function buildRandomSchedule(courses: Course[], costCache: Map<string, number>) 
         cost: 0,
         data: {}
     };
+
     for (let course of courses) {
         schedule.data[course.code] = {};
         for (let section of course.sections) {
@@ -212,7 +322,7 @@ function schedule(courses: Course[]) {
         for (let j = 0; j < 4; j++) { // Number of schedules per generation
             let newSchedule = JSON.parse(JSON.stringify(bestOfPrevGen));
             for (let k = 0; k < 100; k++) { // Number of iterations per generation
-                newSchedule = iterateSchedule(JSON.parse(JSON.stringify(newSchedule)));
+                newSchedule = iterateSchedule(newSchedule);
                 newSchedule.cost = cost(courses, newSchedule, costCache);
                 if (newSchedule.cost < bestSchedule.cost) {
                     bestSchedule = Object.assign({}, newSchedule);

@@ -10,7 +10,6 @@
 .list-view h2 {
     margin: 0;
     padding: 0;
-    margin-top: 20px;
     margin-bottom: 10px;
     font-size: 1.3rem;
     font-weight: 600;
@@ -19,6 +18,11 @@
 
 .list-view .day {
     width: 100%;
+    margin-top: 20px;
+}
+
+.list-view .day:first-of-type {
+    margin-top: 0;
 }
 
 .list-view .event {

@@ -4,7 +4,6 @@ import Menu3Filled from './icons/List';
 import Menu7Filled from './icons/Menu';
 import ListFilled from './icons/Week';
 import Timetable from './Timetable';
-import { click } from '@testing-library/user-event/dist/click';
 import { useLocalStorage } from 'usehooks-ts';
 
 function App() {
@@ -111,6 +110,14 @@ function App() {
         )}
       </div>
 
+      {/* <button className='option-card'>
+        <h2>Advanced Search</h2>
+      </button>
+
+      <button className='option-card'>
+        <h2>Browse Groups</h2>
+      </button> */}
+
       <div className={`multiselect ${selectedCourseCodes.length === 0 ? 'invisible' : ''}`}>
         <div className='select-box' style={{ "--multiselect-state": multiselectState, "--number-of-states": 3 } as React.CSSProperties}></div>
         <div className='icons'>
@@ -127,6 +134,10 @@ function App() {
       </div>
 
       <Timetable timetableType={multiselectState} ref={timetableRef} />
+
+      <button className='option-card' onClick={()=>window.location.href="mailto:me@connorw.org"}>
+        <h2>Reach Out</h2>
+      </button>
     </div>
   );
 }

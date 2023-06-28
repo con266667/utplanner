@@ -1,0 +1,78 @@
+.day-view {
+    width: 90%;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.day-view .header {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    width: calc(100% - 16pt);
+}
+
+.day-view .header h1 {
+    width: 60vw;
+    text-align: center;
+    padding: 0;
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 500;
+    color: #666;
+    height: 30px;
+}
+
+.day-view .events {
+    position: absolute;
+    left: 50px;
+    width: calc(90% - 50px);
+    margin: 0;
+    padding: 0;
+    margin-left: 15px;
+    margin-top: 70px;
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    align-items: center;
+}
+
+.day-view .events-holder {
+    width: 100%;
+    height: calc(50pt);
+    border-radius: 10px;
+}
+
+.day-view .event {
+    height: calc(100% - 8pt - 10px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: calc(100% - 16pt - 15px);
+    padding: 4pt 8pt;
+    margin: 5px 3px;
+    background: #f5f5f5;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    overflow: hidden;
+}
+
+.day-view .event h3 {
+    margin: 0;
+    padding: 0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.day-view .event h4 {
+    margin: 0;
+    padding: 0;
+    font-size: 0.8rem;
+    font-weight: 400;
+    font-family: monospace;
+    color: #777;
+}
