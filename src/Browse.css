@@ -1,0 +1,48 @@
+.browse {
+    height: 100vh;
+    padding: 5pt;
+}
+
+.browse .results {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    justify-content: start;
+    gap: 15px;
+    width: 100%;
+}
+
+.browse .results .course {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    width: calc(100% - 28pt);
+    padding: 12pt 12pt;
+    border-radius: 15px;
+    background-color: #ededed;
+    /* box-shadow: 0 0 10pt rgba(0, 0, 0, 0.1); */
+    gap: 10px;
+}
+
+.browse .results .course .info {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    justify-content: center;
+    margin-right: auto;
+    gap: 5px;
+}
+
+.browse .results .course h2 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.browse .results .course h3 {
+    font-size: 1rem;
+    font-weight: 400;
+    margin: 0;
+    font-family: monospace;
+}

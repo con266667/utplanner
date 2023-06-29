@@ -28,6 +28,17 @@ input {
   margin: 0;
 }
 
+.browse {
+  width: calc(90% - 10px);
+  margin-left: calc(5% + 5px);
+}
+
+.browse .options {
+  display: grid;
+  width: 100%;
+  gap: 10px;
+}
+
 .selected-courses {
   display: flex;
   flex-direction: row;

@@ -23,6 +23,28 @@ function Home() {
   let cachedSearches: {[key: string]: any} = {};
 
   let optimizations = ['Late Start', 'Early End', 'Fewer Days'];
+  let divisions = [
+    {
+      name: 'Engineering',
+      code: 'APSC'
+    },
+    {
+      name: 'Arts & Science',
+      code: 'ARTSC'
+    },
+    {
+      name: 'Architecture',
+      code: 'ARCLA',
+    },
+    {
+      name: 'Music',
+      code: 'MUSIC',
+    },
+    {
+      name: 'Kinesiology',
+      code: 'FPEH',
+    },
+  ]
 
   function optimizationIcon(optimization: string) {
     switch (optimization) {
@@ -144,6 +166,17 @@ function Home() {
               <hr />
             </React.Fragment>
         )}
+      </div>
+
+      <div className={`browse ${selectedCourseCodes.length === 0 ? '' : 'invisible'}`}>
+        <h2>Browse</h2>
+        <div className='options'>
+          {divisions.map((division) =>
+            <button key={division.code} className='browse-option' onClick={()=>navigate("faculty/" + division.code)}>
+              <h3>{division.name}</h3>
+            </button>
+          )}
+        </div>
       </div>
 
       <div className={`timetable-options ${selectedCourseCodes.length === 0 ? 'invisible' : ''}`}>

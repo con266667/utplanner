@@ -145,12 +145,18 @@ const Timetable = forwardRef((props: any, ref: any) => {
     useEffect(() => {
         // setupTimetable(["MAT185H1", "ESC102H1", "ESC190H1", "ESC195H1", "MSE160H1", "ECE159H1"]);
         let newCourseConf = JSON.parse(localStorage.getItem('courseConfigurations') ?? "{}") as {[key: string]: CourseConfiguration};
+        let newSelectedCourseCodes = JSON.parse(localStorage.getItem('selectedCourseCodes') ?? "[]") as string[];
+
         if (courseConfigurations !== newCourseConf) {
             setCourseConfigurations(newCourseConf);
         }
+
+        if (selectedCourseCodes !== newSelectedCourseCodes) {
+            setSelectedCourseCodes(newSelectedCourseCodes);
+        }
         
-        if (currentSchedule.id !== scheduleID(selectedOptimization, newCourseConf)) {
-            setupTimetable(selectedCourseCodes, selectedOptimization);
+        if (currentSchedule.id !== scheduleID(newSelectedCourseCodes, selectedOptimization, newCourseConf)) {
+            setupTimetable(newSelectedCourseCodes, selectedOptimization);
         }
     }, []);
 
@@ -412,8 +418,8 @@ function buildRandomSchedule(courses: Course[], costCache: Map<string, number>, 
     return schedule;
 }
 
-function scheduleID(selectedOptimization: string, courseConfigurations: {[key: string]: CourseConfiguration}) {
-    return JSON.stringify(courseConfigurations) + selectedOptimization;
+function scheduleID(courseCodes: string[], selectedOptimization: string, courseConfigurations: {[key: string]: CourseConfiguration}) {
+    return JSON.stringify(courseConfigurations) + selectedOptimization + courseCodes.sort().join('');
 }
 
 function schedule(courses: Course[], selectedOptimization: string, courseConfigurations: {[key: string]: CourseConfiguration}) {
@@ -435,7 +441,7 @@ function schedule(courses: Course[], selectedOptimization: string, courseConfigu
         }
     }
 
-    bestSchedule.id = scheduleID(selectedOptimization, courseConfigurations);
+    bestSchedule.id = scheduleID(courses.map((course) => course.code), selectedOptimization, courseConfigurations);
 
     return bestSchedule;
 }

@@ -41,7 +41,7 @@ export type Section = {
     enrolmentInd: string;
     tbaInd: string;
     openLimitInd: string;
-    notes: never[];
+    notes: any[];
     enrolmentControls: {
       yearOfStudy: string;
       post: {
@@ -107,8 +107,8 @@ export type Section = {
       recommendedPreparation: string;
       note: null;
       division: string;
-      breadthRequirements: null;
-      distributionRequirements: null;
+      breadthRequirements: string[] | null;
+      distributionRequirements: string[] | null;
       publicationSections: string[];
       cmPublicationSections: {
         section: string;
@@ -146,7 +146,7 @@ export type Section = {
         code: string;
       }[];
     }[];
-    notes: never[];
+    notes: any[];
     cancelInd: string;
     subscriptionTtb: boolean;
     subscriptionOpenData: boolean;
