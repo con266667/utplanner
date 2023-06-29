@@ -84,6 +84,14 @@ input {
   background: #ededed;
 }
 
+.timetable-options {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: start;
+  flex-direction: row;
+}
+
 .multiselect {
   background: #ededed;
   border-radius: 15px;
@@ -92,7 +100,74 @@ input {
   margin-top: 15px;
   padding-top: 5px;
   padding-left: 5px;
-  width: calc(90% - 10px);
+  width: calc(90% - 90px);
+}
+
+.optimizations-dropdown {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: row;
+  width: 70px;
+  height: 45px;
+  margin-top: 15px;
+  margin-left: 10px;
+  border-radius: 15px;
+  z-index: 200;
+  background: #ededed;
+}
+
+.optimizations-dropdown-options {
+  position: absolute;
+  right: 25px;
+  background: #ededed;
+  top: 145px;
+  border-radius: 15px;
+  width: 170px;
+  padding: 3pt 10pt;
+  transform: scale(0.53);
+  opacity: 0;
+  z-index: 0;
+  box-shadow: 0 0 30px rgba(0,0,0,0.2);
+  transform-origin: top right;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.optimizations-dropdown-options.active {
+  z-index: 200;
+  transform: scale(1);
+  opacity: 1;
+}
+
+.optimizations-dropdown-options .optimization {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  height: 40px;
+  border-radius: 15px;
+  font-size: 1rem;
+  font-weight: 500;
+  gap: 30px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.optimizations-dropdown-options hr {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
+.optimizations-dropdown-options .optimization h3 {
+  margin: 0;
+  padding: 0;
+  font-weight: 500;
+}
+
+.optimizations-dropdown-options .optimization .icon {
+  margin-right: 12px;
+  width: 10px;
+  margin-left: auto;
 }
 
 .multiselect .select-box {
@@ -106,7 +181,7 @@ input {
   width: calc(79% / var(--number-of-states));
   border-radius: 12px;
   background: white;
-  margin-left: calc(var(--multiselect-state) * (100% / (var(--number-of-states)) - 1px));
+  margin-left: calc(var(--multiselect-state) * (100% / (var(--number-of-states)) - 3px));
   transition: all 0.3s ease;
 }
 

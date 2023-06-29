@@ -26,6 +26,12 @@
     height: 30px;
 }
 
+.day-view .header button {
+    font-size: 1rem;
+    font-weight: 700;
+    padding: 0;
+}
+
 .day-view .events {
     position: absolute;
     left: 50px;

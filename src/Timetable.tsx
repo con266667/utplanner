@@ -13,8 +13,8 @@ const Timetable = forwardRef((props: any, ref: any) => {
     let allTimes = [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
 
     useImperativeHandle(ref, () => ({
-        updateTimetable: (courseCodes: string[]) => {
-            setupTimetable(courseCodes);
+        updateTimetable: (courseCodes: string[], selectedOptimization: string) => {
+            setupTimetable(courseCodes, selectedOptimization);
         }
     }));
 
@@ -73,7 +73,7 @@ const Timetable = forwardRef((props: any, ref: any) => {
         return courses;
     }
 
-    async function setupTimetable(courseCodes: string[]) {
+    async function setupTimetable(courseCodes: string[], selectedOptimization: string) {
         if (courseCodes.length === 0) {
             setEvents([]);
             return;
@@ -98,7 +98,7 @@ const Timetable = forwardRef((props: any, ref: any) => {
             }
         }
         events.sort((a, b) => a.startMillis - b.startMillis);
-        let _schedule = schedule(courses);
+        let _schedule = schedule(courses, selectedOptimization);
         console.log(_schedule.cost);
         events = events.filter((event) => _schedule.data[event.courseCode][event.type].sectionNumber === event.sectionNumber);
         events = events.filter((event, index, self) => self.findIndex((e) => e.courseCode === event.courseCode && e.type === event.type && e.sectionNumber === event.sectionNumber && e.startMillis === event.startMillis && e.day === event.day) === index);
@@ -244,6 +244,40 @@ function numberOfCollisions(events: any[]) {
     return collisions;
 }
 
+function averageStartTime(sortedEvents: any[]) {
+    let total = 0;
+    let count = 0;
+    for (let day of [1, 2, 3, 4, 5]) {
+        let events = sortedEvents.filter((event) => event.day === day);
+        if (events.length > 0) {
+            total += events[0].startMillis;
+            count++;
+        }
+    }
+    return (total / count) / 3600000;
+}
+
+function averageEndTime(sortedEvents: any[]) {
+    let total = 0;
+    let count = 0;
+    for (let day of [1, 2, 3, 4, 5]) {
+        let events = sortedEvents.filter((event) => event.day === day);
+        if (events.length > 0) {
+            total += events[events.length - 1].endMillis;
+            count++;
+        }
+    }
+    return (total / count) / 3600000;
+}
+
+function numberOfDays(events: any[]) {
+    let days = new Set<number>();
+    for (let event of events) {
+        days.add(event.day);
+    }
+    return days.size;
+}
+
 function allEventsInSchedule(courses: Course[], schedule: Schedule) {
     let events: any[] = [];
     let eventIds = new Set<string>();
@@ -266,12 +300,34 @@ function allEventsInSchedule(courses: Course[], schedule: Schedule) {
     return events;
 }
 
-function cost(courses: Course[], schedule: Schedule, costCache: Map<string, number>) {
+function selectedCost(courses: Course[], schedule: Schedule, selectedOptimization: string) {
+    switch (selectedOptimization) {
+        case "Late Start":
+            return lateStartCost(courses, schedule);
+        case "Early End":
+            return earlyEndCost(courses, schedule);
+        case "Fewer Days":
+            return numberOfDays(allEventsInSchedule(courses, schedule)) * 4;
+        default:
+            return 0;
+    }
+}
+
+function cost(courses: Course[], schedule: Schedule, costCache: Map<string, number>, selectedOptimization: string) {
     let scheduleString = JSON.stringify(schedule);
     if (!costCache.has(scheduleString)) {
-        costCache.set(scheduleString, numberOfCollisions(allEventsInSchedule(courses, schedule)));
+        let _cost = numberOfCollisions(allEventsInSchedule(courses, schedule)) * 50 + selectedCost(courses, schedule, selectedOptimization);
+        costCache.set(scheduleString, _cost);
     }
     return costCache.get(scheduleString)!;
+}
+
+function lateStartCost(courses: Course[], schedule: Schedule) {
+    return 21 - averageStartTime(allEventsInSchedule(courses, schedule).sort((a, b) => a.startMillis - b.startMillis));
+}
+
+function earlyEndCost(courses: Course[], schedule: Schedule) {
+    return averageEndTime(allEventsInSchedule(courses, schedule).sort((a, b) => a.endMillis - b.endMillis));
 }
 
 function iterateSchedule(schedule: Schedule) {
@@ -291,7 +347,7 @@ function iterateSchedule(schedule: Schedule) {
     return newSchedule;
 }
 
-function buildRandomSchedule(courses: Course[], costCache: Map<string, number>) {
+function buildRandomSchedule(courses: Course[], costCache: Map<string, number>, selectedOptimization: string) {
     let schedule: Schedule = {
         cost: 0,
         data: {}
@@ -308,22 +364,22 @@ function buildRandomSchedule(courses: Course[], costCache: Map<string, number>) 
             }
         }
     }
-    schedule.cost = cost(courses, schedule, costCache);
+    schedule.cost = cost(courses, schedule, costCache, selectedOptimization);
     return schedule;
 }
 
-function schedule(courses: Course[]) {
-    let bestSchedule = buildRandomSchedule(courses, new Map());
+function schedule(courses: Course[], selectedOptimization: string) {
+    let bestSchedule = buildRandomSchedule(courses, new Map(), selectedOptimization);
     let costCache = new Map();
     costCache.set(JSON.stringify(bestSchedule), bestSchedule.cost);
     
     for (let i = 0; i < 10; i++) { // Number of generations
         let bestOfPrevGen = JSON.parse(JSON.stringify(bestSchedule));
-        for (let j = 0; j < 4; j++) { // Number of schedules per generation
+        for (let j = 0; j < 6; j++) { // Number of schedules per generation
             let newSchedule = JSON.parse(JSON.stringify(bestOfPrevGen));
-            for (let k = 0; k < 100; k++) { // Number of iterations per generation
+            for (let k = 0; k < 150; k++) { // Number of iterations per generation
                 newSchedule = iterateSchedule(newSchedule);
-                newSchedule.cost = cost(courses, newSchedule, costCache);
+                newSchedule.cost = cost(courses, newSchedule, costCache, selectedOptimization);
                 if (newSchedule.cost < bestSchedule.cost) {
                     bestSchedule = Object.assign({}, newSchedule);
                 }

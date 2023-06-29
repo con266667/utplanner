@@ -5,15 +5,35 @@ import Menu7Filled from './icons/Menu';
 import ListFilled from './icons/Week';
 import Timetable from './Timetable';
 import { useLocalStorage } from 'usehooks-ts';
+import SunHaze from './icons/Sunrise';
+import SunDawnFilled from './icons/Sunset';
+import Home from './icons/House';
 
 function App() {
   const [multiselectState, setMultiselectState] = useState(0);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [searchedCourses, setSearchedCourses] = useState<any[]>([]); // [{code: "ESC180", title: "Introduction to Programming for Engineers", ...}
   const [selectedCourseCodes, setSelectedCourseCodes] = useLocalStorage<string[]>('selectedCourseCodes', []);
+  const [optimizationsDropdownOpen, setOptimizationsDropdownOpen] = useState<boolean>(false);
+  const [selectedOptimization, setSelectedOptimization] = useLocalStorage<string>('selectedOptimization', "Late Start"); // "Late Start", "Early Finish", "Fewer Days"
   const timetableRef = useRef<any>();
 
   let cachedSearches: {[key: string]: any} = {};
+
+  let optimizations = ['Late Start', 'Early End', 'Fewer Days'];
+
+  function optimizationIcon(optimization: string) {
+    switch (optimization) {
+      case 'Late Start':
+        return <SunHaze />;
+      case 'Early End':
+        return <SunDawnFilled />;
+      case 'Fewer Days':
+        return <Home />;
+      default:
+        return <SunHaze />;
+    }
+  }
 
   const searchCourses = async (search: string) => {
     if (search === "") {
@@ -71,10 +91,10 @@ function App() {
 
   function courseClicked(course: string) {
     if (selectedCourseCodes.includes(course)) {
-      timetableRef.current?.updateTimetable(selectedCourseCodes.filter((c) => c !== course));
+      timetableRef.current?.updateTimetable(selectedCourseCodes.filter((c) => c !== course), selectedOptimization);
       setSelectedCourseCodes(selectedCourseCodes.filter((c) => c !== course));
     } else {
-      timetableRef.current?.updateTimetable([...selectedCourseCodes, course]);
+      timetableRef.current?.updateTimetable([...selectedCourseCodes, course], selectedOptimization);
       setSelectedCourseCodes([...selectedCourseCodes, course]);
     }
   }
@@ -110,26 +130,40 @@ function App() {
         )}
       </div>
 
-      {/* <button className='option-card'>
-        <h2>Advanced Search</h2>
-      </button>
-
-      <button className='option-card'>
-        <h2>Browse Groups</h2>
-      </button> */}
-
-      <div className={`multiselect ${selectedCourseCodes.length === 0 ? 'invisible' : ''}`}>
-        <div className='select-box' style={{ "--multiselect-state": multiselectState, "--number-of-states": 3 } as React.CSSProperties}></div>
-        <div className='icons'>
-          <div className='icon' onClick={()=>setMultiselectState(0)}>
-            <Menu3Filled />
+      <div className='timetable-options'>
+        <div className={`multiselect ${selectedCourseCodes.length === 0 ? 'invisible' : ''}`}>
+          <div className='select-box' style={{ "--multiselect-state": multiselectState, "--number-of-states": 3 } as React.CSSProperties}></div>
+          <div className='icons'>
+            <div className='icon' onClick={()=>setMultiselectState(0)}>
+              <Menu3Filled />
+            </div>
+            <div className='icon' onClick={()=>setMultiselectState(1)}>
+              <Menu7Filled />
+            </div>
+            <div className='icon' onClick={()=>setMultiselectState(2)}>
+              <ListFilled />
+            </div>
           </div>
-          <div className='icon' onClick={()=>setMultiselectState(1)}>
-            <Menu7Filled />
-          </div>
-          <div className='icon' onClick={()=>setMultiselectState(2)}>
-            <ListFilled />
-          </div>
+        </div>
+        <div className='optimizations-dropdown' onClick={()=>setOptimizationsDropdownOpen(true)}>
+          {optimizationIcon(selectedOptimization)}
+        </div>
+        <div className={`optimizations-dropdown-options ${optimizationsDropdownOpen ? 'active' : ''}`}>
+          {
+            optimizations.map((optimization) =>
+            <React.Fragment key={optimization}>
+              <div className='optimization' onClick={()=>{
+                setSelectedOptimization(optimization);
+                timetableRef.current?.updateTimetable(selectedCourseCodes, optimization);
+                setOptimizationsDropdownOpen(false);
+              }}>
+                <h3>{optimization}</h3>
+                <div className='icon'>{optimizationIcon(optimization)}</div>
+              </div>
+              {optimization !== optimizations[optimizations.length-1] && <hr />}
+            </React.Fragment>
+            )
+          }
         </div>
       </div>
 
