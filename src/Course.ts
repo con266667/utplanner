@@ -154,3 +154,18 @@ export type Section = {
     tb2Active: boolean;
     fullyOnline: boolean;
   };
+
+  export async function fetchCourse(courseCode: string): Promise<Course> {
+    let res = await fetch('/api/get_courses', {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+      },
+      body: JSON.stringify({"courseCodeAndTitleProps":{"courseCode":courseCode,"courseTitle":"","courseSectionCode":""},"sessions":["20235F","20235S","20235", "20239", "20241", "20239-20241"],"divisions":["APSC","ARTSC","FPEH","MUSIC","ARCLA","ERIN","SCAR"],"direction":"asc"})
+    });
+    if (!res.ok) {
+      throw new Error(`Failed to fetch course ${courseCode}`);
+    }
+    return (await res.json()).payload[0];
+  }

@@ -1,0 +1,25 @@
+.course-conf {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 10pt 30pt;
+}
+
+.section-select {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    margin-bottom: 10pt;
+    width: 100%;
+    gap: 12px;
+}
+
+.section-select h3 {
+    margin: 0;
+    margin-right: auto;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #555;
+}

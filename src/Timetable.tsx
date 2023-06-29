@@ -3,12 +3,20 @@ import './Timetable.css';
 import './TimetableListView.css';
 import './TimetableWeekView.css';
 import './TimetableDayView.css';
-import { Course } from './Course';
+import { Course, fetchCourse } from './Course';
 import { useLocalStorage } from 'usehooks-ts';
+import { CourseConfiguration } from './CourseConf';
+import { useNavigate } from 'react-router-dom';
 
 const Timetable = forwardRef((props: any, ref: any) => {
+    const navigate = useNavigate();
     let [events, setEvents] = useLocalStorage<any[]>('events', []);
     let [dayViewSelectedDay, setDayViewSelectedDay] = useLocalStorage<number>('dayViewSelectedDay', 1);
+    const [courseConfigurations, setCourseConfigurations] = useLocalStorage<{[key: string]: CourseConfiguration}>('courseConfigurations', {});
+    const [currentSchedule, setCurrentSchedule] = useLocalStorage<Schedule>('currentSchedule', {id:'', cost:0, data:{}});
+    const [selectedOptimization, setSelectedOptimization] = useLocalStorage<string>('selectedOptimization', "Late Start");
+    const [selectedCourseCodes, setSelectedCourseCodes] = useLocalStorage<string[]>('selectedCourseCodes', []);
+
 
     let allTimes = [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
 
@@ -59,21 +67,36 @@ const Timetable = forwardRef((props: any, ref: any) => {
     async function loadCourses(courseCodes: string[]) {
         let courses: Course[] = [];
         for (let courseCode of courseCodes) {
-            let res = await fetch('api/get_courses', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({"courseCodeAndTitleProps":{"courseCode":courseCode,"courseTitle":"","courseSectionCode":""},"sessions":["20235", "20241"],"divisions":["APSC"],"direction":"asc"})
-            });
-            let json = await res.json();
-            courses.push(json.payload[0]);
+            let course = await fetchCourse(courseCode);
+            if (course !== undefined) {
+                courses.push(course);
+            }
         }
         return courses;
     }
 
-    async function setupTimetable(courseCodes: string[], selectedOptimization: string) {
+    function setDefaultCourseConfiguration(course: Course) {
+        setCourseConfigurations((prevCourseConfigurations) => {
+            let newCourseConfigurations = Object.assign({}, prevCourseConfigurations);
+            newCourseConfigurations[course.code] = {
+                courseCode: course.code,
+                courseName: course.name,
+                courseDescription: course.cmCourseInfo.description,
+                selectedSections: {},
+                sectionsAvailable: {}
+            };
+            course.sections.forEach(section => {
+                if (newCourseConfigurations[course.code].sectionsAvailable[section.type] === undefined) {
+                    newCourseConfigurations[course.code].sectionsAvailable[section.type] = [section.sectionNumber];
+                } else {
+                    newCourseConfigurations[course.code].sectionsAvailable[section.type].push(section.sectionNumber);
+                }
+            });
+            return newCourseConfigurations;
+        });
+    }
+
+    async function setupTimetable(courseCodes: string[], selectedOptimization: string, newCourseConfigurations: {[key: string]: CourseConfiguration} = courseConfigurations) {
         if (courseCodes.length === 0) {
             setEvents([]);
             return;
@@ -81,6 +104,9 @@ const Timetable = forwardRef((props: any, ref: any) => {
         let courses = await loadCourses(courseCodes);
         events = [];
         for (let course of courses) {
+            if (!courseConfigurations[course.code]) {
+                setDefaultCourseConfiguration(course);
+            }
             for (let section of course.sections) {
                 for (let meetingTime of section.meetingTimes) {
                     events.push({
@@ -98,8 +124,9 @@ const Timetable = forwardRef((props: any, ref: any) => {
             }
         }
         events.sort((a, b) => a.startMillis - b.startMillis);
-        let _schedule = schedule(courses, selectedOptimization);
-        console.log(_schedule.cost);
+        let _schedule = schedule(courses, selectedOptimization, newCourseConfigurations);
+        setCurrentSchedule(_schedule);
+        console.log(_schedule);
         events = events.filter((event) => _schedule.data[event.courseCode][event.type].sectionNumber === event.sectionNumber);
         events = events.filter((event, index, self) => self.findIndex((e) => e.courseCode === event.courseCode && e.type === event.type && e.sectionNumber === event.sectionNumber && e.startMillis === event.startMillis && e.day === event.day) === index);
         setEvents(Object.assign([], events));
@@ -117,6 +144,14 @@ const Timetable = forwardRef((props: any, ref: any) => {
 
     useEffect(() => {
         // setupTimetable(["MAT185H1", "ESC102H1", "ESC190H1", "ESC195H1", "MSE160H1", "ECE159H1"]);
+        let newCourseConf = JSON.parse(localStorage.getItem('courseConfigurations') ?? "");
+        if (courseConfigurations !== newCourseConf) {
+            setCourseConfigurations(newCourseConf);
+        }
+        
+        if (currentSchedule.id !== scheduleID(selectedOptimization, newCourseConf)) {
+            setupTimetable(selectedCourseCodes, selectedOptimization);
+        }
     }, []);
 
     return (
@@ -130,7 +165,7 @@ const Timetable = forwardRef((props: any, ref: any) => {
                                 <h2>{dayNumberToDayName(day)}</h2>
                                 {events.filter((event) => event.day === day).map((event) => {
                                     return (
-                                        <div className="event" key={JSON.stringify(event)}>
+                                        <div className="event" key={JSON.stringify(event)} onClick={()=>navigate("courses/" + event.courseCode)}>
                                             <h3>{event.courseName}</h3>
                                             <h4>{event.name}</h4>
                                             <p>{millisToString(event.startMillis)} - {millisToString(event.endMillis)}</p>
@@ -171,7 +206,7 @@ const Timetable = forwardRef((props: any, ref: any) => {
                                                 <div className='events-holder' key={time}>
                                                     {
                                                         events.filter((event) => event.day === day && time === millisOfDayToHour(event.startMillis)).map((event) => 
-                                                            <div className="event" key={JSON.stringify(event)} style={{ "--length": millisOfDayToHour(event.endMillis - event.startMillis)}  as React.CSSProperties}>
+                                                            <div className="event" onClick={()=>navigate("courses/" + event.courseCode)} key={JSON.stringify(event)} style={{ "--length": millisOfDayToHour(event.endMillis - event.startMillis)}  as React.CSSProperties}>
                                                                 <h3>{event.courseCode.substring(0,6)}</h3>
                                                                 <h4>{event.name}</h4>
                                                             </div>
@@ -214,7 +249,7 @@ const Timetable = forwardRef((props: any, ref: any) => {
                             <div className='events-holder' key={time}>
                                 {
                                     events.filter((event) => event.day === dayViewSelectedDay && time === millisOfDayToHour(event.startMillis)).map((event) => 
-                                        <div className="event" key={JSON.stringify(event)} style={{ "--length": millisOfDayToHour(event.endMillis - event.startMillis)}  as React.CSSProperties}>
+                                        <div className="event" onClick={()=>navigate("courses/" + event.courseCode)} key={JSON.stringify(event)} style={{ "--length": millisOfDayToHour(event.endMillis - event.startMillis)}  as React.CSSProperties}>
                                             <h3>{event.courseName}</h3>
                                             <h4>{event.name}</h4>
                                         </div>
@@ -246,28 +281,24 @@ function numberOfCollisions(events: any[]) {
 
 function averageStartTime(sortedEvents: any[]) {
     let total = 0;
-    let count = 0;
     for (let day of [1, 2, 3, 4, 5]) {
         let events = sortedEvents.filter((event) => event.day === day);
         if (events.length > 0) {
             total += events[0].startMillis;
-            count++;
         }
     }
-    return (total / count) / 3600000;
+    return (total) / 3600000;
 }
 
 function averageEndTime(sortedEvents: any[]) {
     let total = 0;
-    let count = 0;
     for (let day of [1, 2, 3, 4, 5]) {
         let events = sortedEvents.filter((event) => event.day === day);
         if (events.length > 0) {
             total += events[events.length - 1].endMillis;
-            count++;
         }
     }
-    return (total / count) / 3600000;
+    return (total) / 3600000;
 }
 
 function numberOfDays(events: any[]) {
@@ -316,51 +347,64 @@ function selectedCost(courses: Course[], schedule: Schedule, selectedOptimizatio
 function cost(courses: Course[], schedule: Schedule, costCache: Map<string, number>, selectedOptimization: string) {
     let scheduleString = JSON.stringify(schedule);
     if (!costCache.has(scheduleString)) {
-        let _cost = numberOfCollisions(allEventsInSchedule(courses, schedule)) * 50 + selectedCost(courses, schedule, selectedOptimization);
+        let _cost = numberOfCollisions(allEventsInSchedule(courses, schedule)) * 200 + selectedCost(courses, schedule, selectedOptimization);
         costCache.set(scheduleString, _cost);
     }
     return costCache.get(scheduleString)!;
 }
 
 function lateStartCost(courses: Course[], schedule: Schedule) {
-    return 21 - averageStartTime(allEventsInSchedule(courses, schedule).sort((a, b) => a.startMillis - b.startMillis));
+    return 21*5 - averageStartTime(allEventsInSchedule(courses, schedule).sort((a, b) => a.startMillis - b.startMillis));
 }
 
 function earlyEndCost(courses: Course[], schedule: Schedule) {
     return averageEndTime(allEventsInSchedule(courses, schedule).sort((a, b) => a.endMillis - b.endMillis));
 }
 
-function iterateSchedule(schedule: Schedule) {
+function iterateSchedule(schedule: Schedule, courseConfigurations: {[key: string]: CourseConfiguration}) {
     let newSchedule = JSON.parse(JSON.stringify(schedule)) as Schedule;
     let randomCourseCode = Object.keys(newSchedule.data)[Math.floor(Math.random() * Object.keys(newSchedule.data).length)];
     let randomSectionType = Object.keys(newSchedule.data[randomCourseCode])[Math.floor(Math.random() * Object.keys(newSchedule.data[randomCourseCode]).length)];
+    
+    if (courseConfigurations[randomCourseCode] && courseConfigurations[randomCourseCode].selectedSections.hasOwnProperty(randomSectionType)) {
+        return newSchedule;
+    }
+
     let currentSectionCode = newSchedule.data[randomCourseCode][randomSectionType].sectionNumber;
     let randomOtherSectionCode = newSchedule.data[randomCourseCode][randomSectionType].otherSectionNumbers[Math.floor(Math.random() * newSchedule.data[randomCourseCode][randomSectionType].otherSectionNumbers.length)];
     
     if (randomOtherSectionCode === undefined) {
         return newSchedule;
     }
-    
+
     newSchedule.data[randomCourseCode][randomSectionType].sectionNumber = randomOtherSectionCode;
     newSchedule.data[randomCourseCode][randomSectionType].otherSectionNumbers = newSchedule.data[randomCourseCode][randomSectionType].otherSectionNumbers.filter((otherSectionNumber) => otherSectionNumber !== randomOtherSectionCode);
     newSchedule.data[randomCourseCode][randomSectionType].otherSectionNumbers.push(currentSectionCode);
     return newSchedule;
 }
 
-function buildRandomSchedule(courses: Course[], costCache: Map<string, number>, selectedOptimization: string) {
+function buildRandomSchedule(courses: Course[], costCache: Map<string, number>, selectedOptimization: string, courseConfigurations: {[key: string]: CourseConfiguration}) {
     let schedule: Schedule = {
         cost: 0,
-        data: {}
+        data: {},
+        id: ''
     };
 
     for (let course of courses) {
         schedule.data[course.code] = {};
         for (let section of course.sections) {
             if (!schedule.data[course.code].hasOwnProperty(section.type)) {
-                schedule.data[course.code][section.type] = {
-                    sectionNumber: section.sectionNumber,
-                    otherSectionNumbers: course.sections.filter((otherSection) => otherSection.type === section.type).map((otherSection) => otherSection.sectionNumber).filter((otherSectionCode) => otherSectionCode !== section.sectionNumber)
-                };
+                if (courseConfigurations[course.code] && courseConfigurations[course.code].selectedSections.hasOwnProperty(section.type)) {
+                    schedule.data[course.code][section.type] = {
+                        sectionNumber: courseConfigurations[course.code].selectedSections[section.type],
+                        otherSectionNumbers: course.sections.filter((otherSection) => otherSection.type === section.type).map((otherSection) => otherSection.sectionNumber).filter((otherSectionCode) => otherSectionCode !== courseConfigurations[course.code].selectedSections[section.type])
+                    };
+                } else {
+                    schedule.data[course.code][section.type] = {
+                        sectionNumber: section.sectionNumber,
+                        otherSectionNumbers: course.sections.filter((otherSection) => otherSection.type === section.type).map((otherSection) => otherSection.sectionNumber).filter((otherSectionCode) => otherSectionCode !== section.sectionNumber)
+                    };
+                }
             }
         }
     }
@@ -368,8 +412,12 @@ function buildRandomSchedule(courses: Course[], costCache: Map<string, number>, 
     return schedule;
 }
 
-function schedule(courses: Course[], selectedOptimization: string) {
-    let bestSchedule = buildRandomSchedule(courses, new Map(), selectedOptimization);
+function scheduleID(selectedOptimization: string, courseConfigurations: {[key: string]: CourseConfiguration}) {
+    return JSON.stringify(courseConfigurations) + selectedOptimization;
+}
+
+function schedule(courses: Course[], selectedOptimization: string, courseConfigurations: {[key: string]: CourseConfiguration}) {
+    let bestSchedule = buildRandomSchedule(courses, new Map(), selectedOptimization, courseConfigurations);
     let costCache = new Map();
     costCache.set(JSON.stringify(bestSchedule), bestSchedule.cost);
     
@@ -378,7 +426,7 @@ function schedule(courses: Course[], selectedOptimization: string) {
         for (let j = 0; j < 6; j++) { // Number of schedules per generation
             let newSchedule = JSON.parse(JSON.stringify(bestOfPrevGen));
             for (let k = 0; k < 150; k++) { // Number of iterations per generation
-                newSchedule = iterateSchedule(newSchedule);
+                newSchedule = iterateSchedule(newSchedule, courseConfigurations);
                 newSchedule.cost = cost(courses, newSchedule, costCache, selectedOptimization);
                 if (newSchedule.cost < bestSchedule.cost) {
                     bestSchedule = Object.assign({}, newSchedule);
@@ -387,10 +435,13 @@ function schedule(courses: Course[], selectedOptimization: string) {
         }
     }
 
+    bestSchedule.id = scheduleID(selectedOptimization, courseConfigurations);
+
     return bestSchedule;
 }
 
 type Schedule = {
+    id: string,
     cost: number,
     data: {
         [courseCode: string]: {
