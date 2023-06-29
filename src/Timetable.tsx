@@ -171,7 +171,7 @@ const Timetable = forwardRef((props: any, ref: any) => {
                                                 <div className='events-holder' key={time}>
                                                     {
                                                         events.filter((event) => event.day === day && time === millisOfDayToHour(event.startMillis)).map((event) => 
-                                                            <div className="event" key={JSON.stringify(event)}>
+                                                            <div className="event" key={JSON.stringify(event)} style={{ "--length": millisOfDayToHour(event.endMillis - event.startMillis)}  as React.CSSProperties}>
                                                                 <h3>{event.courseCode.substring(0,6)}</h3>
                                                                 <h4>{event.name}</h4>
                                                             </div>
@@ -192,9 +192,9 @@ const Timetable = forwardRef((props: any, ref: any) => {
                 props.timetableType === 2 &&
                 <div className="day-view">
                     <div className='header'>
-                        <button className={`${dayViewSelectedDay <= 1 ? 'invisible': ''}`} onClick={()=>setDayViewSelectedDay((d)=>--d)}>‹</button>
+                        <button disabled={dayViewSelectedDay <= 1} onClick={()=>dayViewSelectedDay > 1 && setDayViewSelectedDay((d)=>--d)}>‹</button>
                         <h1>{dayNumberToDayName(dayViewSelectedDay)}</h1>
-                        <button className={`${dayViewSelectedDay >= 5 ? 'invisible': ''}`} onClick={()=>setDayViewSelectedDay((d)=>++d)}>›</button>
+                        <button disabled={dayViewSelectedDay >= 5} onClick={()=>dayViewSelectedDay < 5 && setDayViewSelectedDay((d)=>++d)}>›</button>
                     </div>
                     <div className='times'>
                         {
@@ -214,7 +214,7 @@ const Timetable = forwardRef((props: any, ref: any) => {
                             <div className='events-holder' key={time}>
                                 {
                                     events.filter((event) => event.day === dayViewSelectedDay && time === millisOfDayToHour(event.startMillis)).map((event) => 
-                                        <div className="event" key={JSON.stringify(event)}>
+                                        <div className="event" key={JSON.stringify(event)} style={{ "--length": millisOfDayToHour(event.endMillis - event.startMillis)}  as React.CSSProperties}>
                                             <h3>{event.courseName}</h3>
                                             <h4>{event.name}</h4>
                                         </div>

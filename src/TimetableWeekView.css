@@ -81,7 +81,7 @@
 }
 
 .week-view .event {
-    height: calc(100% - 8pt - 10px);
+    height: calc(100% * var(--length) - 8pt - 10px);
     display: flex;
     flex-direction: column;
     align-items: center;

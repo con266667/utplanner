@@ -140,8 +140,8 @@ function App() {
         )}
       </div>
 
-      <div className='timetable-options'>
-        <div className={`multiselect ${selectedCourseCodes.length === 0 ? 'invisible' : ''}`}>
+      <div className={`timetable-options ${selectedCourseCodes.length === 0 ? 'invisible' : ''}`}>
+        <div className='multiselect'>
           <div className='select-box' style={{ "--multiselect-state": multiselectState, "--number-of-states": 3 } as React.CSSProperties}></div>
           <div className='icons'>
             <div className='icon' onClick={()=>setMultiselectState(0)}>
@@ -179,9 +179,9 @@ function App() {
 
       <Timetable timetableType={multiselectState} ref={timetableRef} />
 
-      <button className='option-card' onClick={()=>window.location.href="mailto:me@connorw.org"}>
+      {/* <button className='option-card' onClick={()=>window.location.href="mailto:me@connorw.org"}>
         <h2>Reach Out</h2>
-      </button>
+      </button> */}
     </div>
   );
 }
