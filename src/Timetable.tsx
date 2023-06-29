@@ -144,7 +144,7 @@ const Timetable = forwardRef((props: any, ref: any) => {
 
     useEffect(() => {
         // setupTimetable(["MAT185H1", "ESC102H1", "ESC190H1", "ESC195H1", "MSE160H1", "ECE159H1"]);
-        let newCourseConf = JSON.parse(localStorage.getItem('courseConfigurations') ?? "");
+        let newCourseConf = JSON.parse(localStorage.getItem('courseConfigurations') ?? "{}") as {[key: string]: CourseConfiguration};
         if (courseConfigurations !== newCourseConf) {
             setCourseConfigurations(newCourseConf);
         }
