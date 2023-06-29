@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import './App.css';
 import Menu3Filled from './icons/List';
 import Menu7Filled from './icons/Menu';
@@ -98,6 +98,16 @@ function App() {
       setSelectedCourseCodes([...selectedCourseCodes, course]);
     }
   }
+
+  useEffect(() => {
+    document.addEventListener('click', (event) => {
+      if (event.target instanceof HTMLElement) {
+        if (event.target.closest('.optimizations-dropdown') === null) {
+          setOptimizationsDropdownOpen(false);
+        }
+      }
+    }, false);
+  }, []);
 
   return (
     <div className="App">
