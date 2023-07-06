@@ -10,25 +10,32 @@ function Browse() {
     
     const listInnerRef = useRef<HTMLDivElement>(null);
 
-    const [courseResults, setCourseResults] = useState<Course[]>([]);
+    const [courseResults, setCourseResults] = useLocalStorage<Course[]>('courseResults', []);
     let loading = false;
     let nextPage = 1;
     const [selectedCourseCodes, setSelectedCourseCodes] = useLocalStorage<string[]>('selectedCourseCodes', []);
+    let selectedYear = "";
 
     async function getCourses() {
+        let req: any = {
+            "departmentProps":[],
+            "sessions":["20235F","20235S","20235", "20239", "20241", "20239-20241"],
+            "divisions":[facultyCode],
+            "page":nextPage++,
+            "pageSize":20,
+            "direction":"asc"
+        }
+
+        if (selectedYear != "") {
+            req["courseLevels"] = [selectedYear]
+        }
+
         let res = await fetch('/api/get_courses_page', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                "departmentProps":[],
-                "sessions":["20235F","20235S","20235", "20239", "20241", "20239-20241"],
-                "divisions":[facultyCode],
-                "page":nextPage++,
-                "pageSize":20,
-                "direction":"asc"
-            })
+            body: JSON.stringify(req)
         });
         let json = await res.json();
         setCourseResults((e)=>[...e, ...json.payload.pageableCourse.courses]);
@@ -50,6 +57,17 @@ function Browse() {
         }
     }
 
+    function clearCourses() {
+        setCourseResults([]);
+        nextPage = 1;
+    }
+
+    function selectYear(courseLevel: string) {
+        selectedYear = courseLevel;
+        clearCourses();
+        getCourses();
+    }
+
     useEffect(() => {
         if (courseResults.length === 0) {
             getCourses();
@@ -61,6 +79,27 @@ function Browse() {
     return (
         <div className="browse">
             <h1>Browse</h1>
+            <div className="filters">
+                {/* <div className="filter">
+                    <h2>Faculty</h2>
+                    <select>
+                        <option value="all">All</option>
+                        <option value="APSC">Engineering</option>
+                        <option value="">Arts & Science</option>
+                    </select>
+                </div> */}
+                <div className="filter">
+                    <h2>Year</h2>
+                    <select onChange={(e) => selectYear(e.target.value)}>
+                        <option value="">All</option>
+                        <option value="100/A">1</option>
+                        <option value="200/B">2</option>
+                        <option value="300/C">3</option>
+                        <option value="400/D">4</option>
+                        <option value="5+">5+</option>
+                    </select>
+                </div>
+            </div>
             <div className="results" ref={listInnerRef}>
                 {courseResults.map((course) => (
                     <div className="course" key={course.code}>

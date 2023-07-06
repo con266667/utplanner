@@ -154,8 +154,8 @@ function Home() {
       <div className='searched-courses'>
         {searchedCourses.map((course) => 
           <React.Fragment key={course.code}>
-              <div className="course" onClick={()=>navigate("courses/" + course.code)}>
-                <div className="info">
+              <div className="course">
+                <div className="info" onClick={()=>navigate("courses/" + course.code)}>
                   <h2>{course.name}</h2>
                   <p>{course.code}</p>
                 </div>
