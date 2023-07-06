@@ -123,6 +123,12 @@ function Browse() {
                     <select onChange={updateCourses} ref={deptRef}>
                         <option value="">All</option>
                         <option value="Division of Engineering Science">EngSci</option>
+                        <option value="Department of Materials Science and Engineering">MSE</option>
+                        <option value="Department of Mechanical & Industrial Engineering">MIE</option>
+                        <option value="Department of Civil and Mineral Engineering">CIV</option>
+                        <option value="Edward S. Rogers Sr. Dept. of Electrical & Computer Engin.">ECE</option>
+                        <option value="Institute of Biomedical Engineering">BME</option>
+                        <option value="Department of Chemical Engineering and Applied Chemistry">Chem</option>
                     </select>
                 </div>
             </div>
