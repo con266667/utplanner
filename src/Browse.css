@@ -1,6 +1,7 @@
 .browse {
     /* height: 100vh; */
     padding: 5pt;
+    padding-bottom: 25pt;
 }
 
 .browse .filters {

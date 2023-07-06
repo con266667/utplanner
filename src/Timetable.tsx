@@ -181,8 +181,7 @@ const Timetable = forwardRef((props: any, ref: any) => {
                                 )}
                             </div>
                         )
-                    })
-                    }
+                    })}
                 </div>
             }
 

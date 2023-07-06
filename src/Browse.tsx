@@ -10,24 +10,38 @@ function Browse() {
     
     const listInnerRef = useRef<HTMLDivElement>(null);
 
-    const [courseResults, setCourseResults] = useLocalStorage<Course[]>('courseResults', []);
+    const [courseResults, setCourseResults] = useState<Course[]>([]);
     let loading = false;
     let nextPage = 1;
     const [selectedCourseCodes, setSelectedCourseCodes] = useLocalStorage<string[]>('selectedCourseCodes', []);
-    let selectedYear = "";
+    const yearRef = useRef<HTMLSelectElement>(null);
+    const deptRef = useRef<HTMLSelectElement>(null);
+    let done = false;
 
     async function getCourses() {
+        if (done) return;
+
         let req: any = {
             "departmentProps":[],
-            "sessions":["20235F","20235S","20235", "20239", "20241", "20239-20241"],
+            "sessions":["20239","20241","20239-20241"],
             "divisions":[facultyCode],
             "page":nextPage++,
             "pageSize":20,
             "direction":"asc"
         }
 
-        if (selectedYear != "") {
-            req["courseLevels"] = [selectedYear]
+        if (yearRef.current?.value !== "") {
+            req["courseLevels"] = [yearRef.current?.value]
+        }
+
+        if (deptRef.current?.value !== "") {
+            req["departmentProps"] = [
+                {
+                    "division": facultyCode,
+                    "department": deptRef.current?.value,
+                    "type": "DEPARTMENT"
+                }
+            ]
         }
 
         let res = await fetch('/api/get_courses_page', {
@@ -38,7 +52,12 @@ function Browse() {
             body: JSON.stringify(req)
         });
         let json = await res.json();
-        setCourseResults((e)=>[...e, ...json.payload.pageableCourse.courses]);
+        if (json.payload.pageableCourse.courses.length === 0) {
+            done = true;
+            loading = false;
+            return;
+        }
+        setCourseResults((e)=>[...e, ...json.payload.pageableCourse.courses].filter((e, i, a) => a.findIndex((t) => (t.code === e.code)) === i));
         loading = false;
     }
 
@@ -59,11 +78,11 @@ function Browse() {
 
     function clearCourses() {
         setCourseResults([]);
+        done = false;
         nextPage = 1;
     }
 
-    function selectYear(courseLevel: string) {
-        selectedYear = courseLevel;
+    function updateCourses() {
         clearCourses();
         getCourses();
     }
@@ -90,13 +109,20 @@ function Browse() {
                 </div> */}
                 <div className="filter">
                     <h2>Year</h2>
-                    <select onChange={(e) => selectYear(e.target.value)}>
+                    <select onChange={updateCourses} ref={yearRef}>
                         <option value="">All</option>
                         <option value="100/A">1</option>
                         <option value="200/B">2</option>
                         <option value="300/C">3</option>
                         <option value="400/D">4</option>
                         <option value="5+">5+</option>
+                    </select>
+                </div>
+                <div className="filter">
+                    <h2>Department</h2>
+                    <select onChange={updateCourses} ref={deptRef}>
+                        <option value="">All</option>
+                        <option value="Division of Engineering Science">EngSci</option>
                     </select>
                 </div>
             </div>

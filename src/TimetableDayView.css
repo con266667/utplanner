@@ -34,7 +34,7 @@
 
 .day-view .events {
     position: absolute;
-    left: 50px;
+    left: calc(5% + 30px);
     width: calc(90% - 50px);
     margin: 0;
     padding: 0;
@@ -47,7 +47,7 @@
 }
 
 .day-view .events-holder {
-    width: 100%;
+    width: 90%;
     height: calc(50pt);
     border-radius: 10px;
 }
