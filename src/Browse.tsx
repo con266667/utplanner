@@ -13,7 +13,13 @@ function Browse() {
     const [courseResults, setCourseResults] = useState<Course[]>([]);
     let loading = false;
     let nextPage = 1;
-    const [selectedCourseCodes, setSelectedCourseCodes] = useLocalStorage<string[]>('selectedCourseCodes', []);
+    const [selectedCourseCodes, setSelectedCourseCodes] = useLocalStorage<{[session:string]: string[]}>('selectedCourseCodes', {
+        "Summer": [],
+        "20239": [],
+        "20241": []
+    });
+    let [selectedSession, setSelectedSession] = useLocalStorage<string>('selectedSession', "Summer");
+    const sessionRef = useRef<HTMLSelectElement>(null);
     const yearRef = useRef<HTMLSelectElement>(null);
     const deptRef = useRef<HTMLSelectElement>(null);
     let done = false;
@@ -23,7 +29,7 @@ function Browse() {
 
         let req: any = {
             "departmentProps":[],
-            "sessions":["20239","20241","20239-20241"],
+            "sessions":[selectedSession],
             "divisions":[facultyCode],
             "page":nextPage++,
             "pageSize":20,
@@ -62,10 +68,10 @@ function Browse() {
     }
 
     function courseClicked(courseCode: string) {
-        if (selectedCourseCodes.includes(courseCode)) {
-            setSelectedCourseCodes((e)=>e.filter((c) => c !== courseCode));
+        if (selectedCourseCodes[selectedSession].includes(courseCode)) {
+            setSelectedCourseCodes((e)=>({...e, [selectedSession]: e[selectedSession].filter((c) => c !== courseCode)}));
         } else {
-            setSelectedCourseCodes([...selectedCourseCodes, courseCode]);
+            setSelectedCourseCodes((e)=>({...e, [selectedSession]: [...e[selectedSession], courseCode]}));
         }
     }
 
@@ -108,6 +114,18 @@ function Browse() {
                     </select>
                 </div> */}
                 <div className="filter">
+                    <h2>Session</h2>
+                    <select onChange={()=>{
+                        selectedSession = sessionRef.current?.value || "Summer";
+                        setSelectedSession(sessionRef.current?.value || "Summer");
+                        updateCourses();
+                    }} ref={sessionRef} defaultValue={selectedSession}>
+                        <option value="Summer">Summer</option>
+                        <option value="20239">Fall</option>
+                        <option value="20241">Winter</option>
+                    </select>
+                </div>
+                <div className="filter">
                     <h2>Year</h2>
                     <select onChange={updateCourses} ref={yearRef}>
                         <option value="">All</option>
@@ -140,7 +158,7 @@ function Browse() {
                             <h3>{course.code}</h3>
                         </div>
                         <button onClick={()=>courseClicked(course.code)}>
-                            {selectedCourseCodes.includes(course.code) ? "Remove" : "Add"}
+                            {selectedCourseCodes[selectedSession].includes(course.code) ? "Remove" : "Add"}
                         </button>
                     </div>
                 ))}

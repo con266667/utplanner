@@ -15,9 +15,14 @@ function Home() {
   const [multiselectState, setMultiselectState] = useState(0);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [searchedCourses, setSearchedCourses] = useState<any[]>([]); // [{code: "ESC180", title: "Introduction to Programming for Engineers", ...}
-  const [selectedCourseCodes, setSelectedCourseCodes] = useLocalStorage<string[]>('selectedCourseCodes', []);
+  const [selectedCourseCodes, setSelectedCourseCodes] = useLocalStorage<{[session:string]: string[]}>('selectedCourseCodes', {
+    "Summer": [],
+    "20239": [],
+    "20241": []
+  });
   const [optimizationsDropdownOpen, setOptimizationsDropdownOpen] = useState<boolean>(false);
   const [selectedOptimization, setSelectedOptimization] = useLocalStorage<string>('selectedOptimization', "Late Start"); // "Late Start", "Early Finish", "Fewer Days"
+  const [selectedSession, setSelectedSession] = useLocalStorage<string>('selectedSession', "Summer");
   const timetableRef = useRef<any>();
 
   let cachedSearches: {[key: string]: any} = {};
@@ -83,7 +88,12 @@ function Home() {
     params.append("term", search);
     params.set("upperThreshold", "200");
     params.set("lowerThreshold", "50");
-    params.set("divisions", "APSC");
+    // params.set("divisions", "APSC");
+    // params.set("divisions", "ARTSC");
+    divisions.forEach((division) => {
+      params.append("divisions", division.code);
+    });
+    params.set("sessions", selectedSession);
 
     if (cachedSearches[params.toString()]) {
       setSearchedCourses(cachedSearches[params.toString()]);
@@ -114,14 +124,14 @@ function Home() {
   }
 
   function courseClicked(course: string) {
-    if (selectedCourseCodes.includes(course)) {
-      let newCourses = selectedCourseCodes.filter((c) => c !== course);
-      setSelectedCourseCodes(newCourses);
-      timetableRef.current?.updateTimetable(newCourses, selectedOptimization);
+    if (selectedCourseCodes[selectedSession].includes(course)) {
+      let newCourses = selectedCourseCodes[selectedSession].filter((c) => c !== course);
+      setSelectedCourseCodes((prev: any) => ({...prev, [selectedSession]: newCourses}));
+      timetableRef.current?.updateTimetable(newCourses, selectedOptimization, selectedSession);
     } else {
-      let newCourses = [...selectedCourseCodes, course];
-      setSelectedCourseCodes(newCourses);
-      timetableRef.current?.updateTimetable(newCourses, selectedOptimization);
+      let newCourses = [...selectedCourseCodes[selectedSession], course];
+      setSelectedCourseCodes((prev: any) => ({...prev, [selectedSession]: newCourses}));
+      timetableRef.current?.updateTimetable(newCourses, selectedOptimization, selectedSession);
     }
   }
 
@@ -133,16 +143,30 @@ function Home() {
     }
   }
 
+  function changeSession(session: string) {
+    setSelectedSession(session);
+    timetableRef.current?.updateTimetable(selectedCourseCodes[session], selectedOptimization, session);
+  }
+
   useEffect(() => {
     document.addEventListener('click', hideDropdown);
   }, []);
 
   return (
     <div className="App">
-      <input value={searchTerm} type="text" id='' placeholder='Search Courses' onInput={onSearchInput} />
-      <h2 className={`search-clear ${searchedCourses.length===0 ? 'invisible' : ''}`} onClick={clearSearch}>×</h2>
-      <div className={`selected-courses ${selectedCourseCodes.length === 0 ? 'invisible' : ''}`} >
-        {selectedCourseCodes.map((course) =>
+      <div className='search-bar'>
+        <div className='search-input'>
+          <input value={searchTerm} type="text" id='' placeholder='Search Courses' onInput={onSearchInput} />
+          <h2 className={`search-clear ${searchedCourses.length===0 ? 'invisible' : ''}`} onClick={clearSearch}>×</h2>
+        </div>
+        <select className='session-dropdown' defaultValue={selectedSession} onChange={(e) => changeSession(e.target.value)}>
+          <option value="Summer">Summer</option>
+          <option value="20239">Fall</option>
+          <option value="20241">Winter</option>
+        </select>
+      </div>
+      <div className={`selected-courses ${(selectedCourseCodes[selectedSession] ?? []).length === 0 ? 'invisible' : ''}`} >
+        {selectedCourseCodes[selectedSession].map((course) =>
           <div key={course} className='course'>
             <span onClick={()=>navigate("courses/" + course)}>{course}</span>
             <h2 onClick={()=>courseClicked(course)}>×</h2>
@@ -160,7 +184,7 @@ function Home() {
                   <p>{course.code}</p>
                 </div>
                   <button className="add" onClick={()=>courseClicked(course.code)}>{
-                    selectedCourseCodes.includes(course.code) ? "Remove" : "Add"
+                    selectedCourseCodes[selectedSession].includes(course.code) ? "Remove" : "Add"
                   } </button>
               </div>
               <hr />
@@ -168,7 +192,7 @@ function Home() {
         )}
       </div>
 
-      <div className={`browse ${selectedCourseCodes.length === 0 ? '' : 'invisible'}`}>
+      <div className={`browse ${selectedCourseCodes[selectedSession].length === 0 ? '' : 'invisible'}`}>
         <h2>Browse</h2>
         <div className='options'>
           {divisions.map((division) =>
@@ -179,7 +203,7 @@ function Home() {
         </div>
       </div>
 
-      <div className={`timetable-options ${selectedCourseCodes.length === 0 ? 'invisible' : ''}`}>
+      <div className={`timetable-options ${selectedCourseCodes[selectedSession].length === 0 ? 'invisible' : ''}`}>
         <div className='multiselect'>
           <div className='select-box' style={{ "--multiselect-state": multiselectState, "--number-of-states": 3 } as React.CSSProperties}></div>
           <div className='icons'>
@@ -203,7 +227,7 @@ function Home() {
             <React.Fragment key={optimization}>
               <div className='optimization' onClick={()=>{
                 setSelectedOptimization(optimization);
-                timetableRef.current?.updateTimetable(selectedCourseCodes, optimization);
+                timetableRef.current?.updateTimetable(selectedCourseCodes[selectedSession], optimization, selectedSession);
                 setOptimizationsDropdownOpen(false);
               }}>
                 <h3>{optimization}</h3>

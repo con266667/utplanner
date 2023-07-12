@@ -10,19 +10,28 @@ import { useNavigate } from 'react-router-dom';
 
 const Timetable = forwardRef((props: any, ref: any) => {
     const navigate = useNavigate();
-    let [events, setEvents] = useLocalStorage<any[]>('events', []);
+    let [events, setEvents] = useLocalStorage<{[session: string]: any[]}>('events', {
+        "Summer": [],
+        "20239": [],
+        "20241": []
+    });
     let [dayViewSelectedDay, setDayViewSelectedDay] = useLocalStorage<number>('dayViewSelectedDay', 1);
     const [courseConfigurations, setCourseConfigurations] = useLocalStorage<{[key: string]: CourseConfiguration}>('courseConfigurations', {});
     const [currentSchedule, setCurrentSchedule] = useLocalStorage<Schedule>('currentSchedule', {id:'', cost:0, data:{}});
     const [selectedOptimization, setSelectedOptimization] = useLocalStorage<string>('selectedOptimization', "Late Start");
-    const [selectedCourseCodes, setSelectedCourseCodes] = useLocalStorage<string[]>('selectedCourseCodes', []);
+    const [selectedCourseCodes, setSelectedCourseCodes] = useLocalStorage<{[session:string]: string[]}>('selectedCourseCodes', {
+        "Summer": [],
+        "20239": [],
+        "20241": []
+    });
+    const [selectedSession, setSelectedSession] = useLocalStorage<string>('selectedSession', "Summer");
 
 
     let allTimes = [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
 
     useImperativeHandle(ref, () => ({
-        updateTimetable: (courseCodes: string[], selectedOptimization: string) => {
-            setupTimetable(courseCodes, selectedOptimization);
+        updateTimetable: (courseCodes: string[], selectedOptimization: string, selectedSession: string) => {
+            setupTimetable(courseCodes, selectedOptimization, selectedSession);
         }
     }));
 
@@ -41,7 +50,7 @@ const Timetable = forwardRef((props: any, ref: any) => {
     }
 
     function allDaysInSchedule() {
-        return events.map((event) => event.day).filter((day, index, self) => self.indexOf(day) === index).sort();
+        return (events[selectedSession] ?? []).map((event) => event.day).filter((day, index, self) => self.indexOf(day) === index).sort();
     }
 
     function dayNumberToDayName(dayNumber: number) {
@@ -72,7 +81,7 @@ const Timetable = forwardRef((props: any, ref: any) => {
                 courses.push(course);
             }
         }
-        return courses;
+        return courses ?? [];
     }
 
     function setDefaultCourseConfiguration(course: Course) {
@@ -96,20 +105,24 @@ const Timetable = forwardRef((props: any, ref: any) => {
         });
     }
 
-    async function setupTimetable(courseCodes: string[], selectedOptimization: string, newCourseConfigurations: {[key: string]: CourseConfiguration} = courseConfigurations) {
+    async function setupTimetable(courseCodes: string[], selectedOptimization: string, selectedSession: string, newCourseConfigurations: {[key: string]: CourseConfiguration} = courseConfigurations) {
         if (courseCodes.length === 0) {
-            setEvents([]);
+            setEvents((prevEvents) => {
+                let newEvents = Object.assign({}, prevEvents);
+                newEvents[selectedSession] = [];
+                return newEvents;
+            });
             return;
         }
         let courses = await loadCourses(courseCodes);
-        events = [];
+        events[selectedSession] = [];
         for (let course of courses) {
             if (!courseConfigurations[course.code]) {
                 setDefaultCourseConfiguration(course);
             }
             for (let section of course.sections) {
                 for (let meetingTime of section.meetingTimes) {
-                    events.push({
+                    events[selectedSession].push({
                         "courseCode": course.code,
                         "courseName": course.name,
                         "name": section.name,
@@ -123,13 +136,17 @@ const Timetable = forwardRef((props: any, ref: any) => {
                 }
             }
         }
-        events.sort((a, b) => a.startMillis - b.startMillis);
+        events[selectedSession].sort((a, b) => a.startMillis - b.startMillis);
         let _schedule = schedule(courses, selectedOptimization, newCourseConfigurations);
         setCurrentSchedule(_schedule);
         console.log(_schedule);
-        events = events.filter((event) => _schedule.data[event.courseCode][event.type].sectionNumber === event.sectionNumber);
-        events = events.filter((event, index, self) => self.findIndex((e) => e.courseCode === event.courseCode && e.type === event.type && e.sectionNumber === event.sectionNumber && e.startMillis === event.startMillis && e.day === event.day) === index);
-        setEvents(Object.assign([], events));
+        events[selectedSession] = events[selectedSession].filter((event) => _schedule.data[event.courseCode][event.type].sectionNumber === event.sectionNumber);
+        events[selectedSession] = events[selectedSession].filter((event, index, self) => self.findIndex((e) => e.courseCode === event.courseCode && e.type === event.type && e.sectionNumber === event.sectionNumber && e.startMillis === event.startMillis && e.day === event.day) === index);
+        setEvents((prevEvents) => {
+            let newEvents = Object.assign({}, prevEvents);
+            newEvents[selectedSession] = events[selectedSession];
+            return newEvents;
+        });
     }
 
     function millisToString(millis: number) {
@@ -145,18 +162,24 @@ const Timetable = forwardRef((props: any, ref: any) => {
     useEffect(() => {
         // setupTimetable(["MAT185H1", "ESC102H1", "ESC190H1", "ESC195H1", "MSE160H1", "ECE159H1"]);
         let newCourseConf = JSON.parse(localStorage.getItem('courseConfigurations') ?? "{}") as {[key: string]: CourseConfiguration};
-        let newSelectedCourseCodes = JSON.parse(localStorage.getItem('selectedCourseCodes') ?? "[]") as string[];
+        let newSelectedCourseCodes = JSON.parse(localStorage.getItem('selectedCourseCodes') ?? "{}") as {[key: string]: string[]};
+        let newSelectedSession = JSON.parse(localStorage.getItem('selectedSession') ?? '"Summer"') as string;
 
         if (courseConfigurations !== newCourseConf) {
             setCourseConfigurations(newCourseConf);
         }
 
-        if (selectedCourseCodes !== newSelectedCourseCodes) {
+        if (selectedCourseCodes !== newSelectedCourseCodes && Object.keys(newSelectedCourseCodes).length !== 0) {
             setSelectedCourseCodes(newSelectedCourseCodes);
         }
+
+        if (selectedSession !== newSelectedSession) {
+            console.log(newSelectedSession);
+            // setSelectedSession(newSelectedSession);
+        }
         
-        if (currentSchedule.id !== scheduleID(newSelectedCourseCodes, selectedOptimization, newCourseConf)) {
-            setupTimetable(newSelectedCourseCodes, selectedOptimization);
+        if (currentSchedule.id !== scheduleID(newSelectedCourseCodes[selectedSession] ?? [], selectedOptimization, newCourseConf)) {
+            setupTimetable(newSelectedCourseCodes[selectedSession], selectedOptimization, selectedSession);
         }
     }, []);
 
@@ -169,7 +192,7 @@ const Timetable = forwardRef((props: any, ref: any) => {
                         return (
                             <div className="day" key={day}>
                                 <h2>{dayNumberToDayName(day)}</h2>
-                                {events.filter((event) => event.day === day).map((event) => {
+                                {(events[selectedSession] ?? []).filter((event) => event.day === day).map((event) => {
                                     return (
                                         <div className="event" key={JSON.stringify(event)} onClick={()=>navigate("courses/" + event.courseCode)}>
                                             <h3>{event.courseName}</h3>
@@ -210,7 +233,7 @@ const Timetable = forwardRef((props: any, ref: any) => {
                                             allTimes.map((time) => 
                                                 <div className='events-holder' key={time}>
                                                     {
-                                                        events.filter((event) => event.day === day && time === millisOfDayToHour(event.startMillis)).map((event) => 
+                                                        (events[selectedSession] ?? []).filter((event) => event.day === day && time === millisOfDayToHour(event.startMillis)).map((event) => 
                                                             <div className="event" onClick={()=>navigate("courses/" + event.courseCode)} key={JSON.stringify(event)} style={{ "--length": millisOfDayToHour(event.endMillis - event.startMillis)}  as React.CSSProperties}>
                                                                 <h3>{event.courseCode.substring(0,6)}</h3>
                                                                 <h4>{event.name}</h4>
@@ -253,7 +276,7 @@ const Timetable = forwardRef((props: any, ref: any) => {
                         allTimes.map((time) => 
                             <div className='events-holder' key={time}>
                                 {
-                                    events.filter((event) => event.day === dayViewSelectedDay && time === millisOfDayToHour(event.startMillis)).map((event) => 
+                                    (events[selectedSession] ?? []).filter((event) => event.day === dayViewSelectedDay && time === millisOfDayToHour(event.startMillis)).map((event) => 
                                         <div className="event" onClick={()=>navigate("courses/" + event.courseCode)} key={JSON.stringify(event)} style={{ "--length": millisOfDayToHour(event.endMillis - event.startMillis)}  as React.CSSProperties}>
                                             <h3>{event.courseName}</h3>
                                             <h4>{event.name}</h4>

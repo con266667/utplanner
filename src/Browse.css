@@ -13,6 +13,11 @@
     width: 100%;
     padding: 5pt;
     margin-bottom: 15px;
+    overflow-x: scroll;
+}
+
+.browse .filters::-webkit-scrollbar {
+    display: none;
 }
 
 .browse .filter {
