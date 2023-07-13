@@ -12,7 +12,7 @@ import { useNavigate } from 'react-router-dom';
 
 function Home() {
   const navigate = useNavigate();
-  const [multiselectState, setMultiselectState] = useState(0);
+  const [multiselectState, setMultiselectState] = useLocalStorage('calendarView', 0);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [searchedCourses, setSearchedCourses] = useState<any[]>([]); // [{code: "ESC180", title: "Introduction to Programming for Engineers", ...}
   const [selectedCourseCodes, setSelectedCourseCodes] = useLocalStorage<{[session:string]: string[]}>('selectedCourseCodes', {
