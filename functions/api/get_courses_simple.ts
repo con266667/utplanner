@@ -9,7 +9,35 @@ export const onRequestPost = async (context) => {
   myHeaders.append("Accept", "application/json, text/plain, */*");
   myHeaders.append("Content-Type", "application/json");
 
-  var response = await fetch("https://api.easi.utoronto.ca/ttb/getCourses", {
+  var body = await context.request.json();
+
+  // If departmentProps is not specified, set it to []
+  if (!body.departmentProps) {
+    body.departmentProps = [];
+  }
+
+  // If sessions is not specified, set it to ["20239","20241","20239-20241"]
+  if (!body.sessions) {
+    body.sessions = ["20239","20241","20239-20241"];
+  }
+
+  // If divisions is not specified, set it to ["APSC","ARTSC","FPEH","MUSIC","ARCLA"]
+  if (!body.divisions) {
+    body.divisions = ["APSC","ARTSC","FPEH","MUSIC","ARCLA"];
+  }
+
+  // If page is not specified, set it to 1
+  if (!body.page) {
+    body.page = 1;
+  }
+
+  // If pageSize is not specified, set it to 10
+  if (!body.pageSize) {
+    body.pageSize = 10;
+  }
+
+
+  var response = await fetch("https://api.easi.utoronto.ca/ttb/getPageableCourses", {
       method: 'POST',
       headers: myHeaders,
       body: JSON.stringify(await context.request.json())
