@@ -69,8 +69,14 @@ export const onRequestPost = async (context) => {
           "type": section.type,
           "meetingTimes": section.meetingTimes.map((meetingTime) => {
             return {
-              "start": meetingTime.start,
-              "end": meetingTime.end,
+              "start": {
+                "day": meetingTime.start.day,
+                "hour": meetingTime.start.millisofday / 3600000,
+              },
+              "end": {
+                "day": meetingTime.end.day,
+                "hour": meetingTime.end.millisofday / 3600000,
+              },
               "building": meetingTime.building.buildingCode,
               "repetition": meetingTime.repetition,
               "repetitionTime": meetingTime.repetitionTime
