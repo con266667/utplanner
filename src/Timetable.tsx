@@ -26,7 +26,6 @@ const Timetable = forwardRef((props: any, ref: any) => {
     });
     const [selectedSession, setSelectedSession] = useLocalStorage<string>('selectedSession', "Summer");
 
-
     let allTimes = [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
 
     useImperativeHandle(ref, () => ({
