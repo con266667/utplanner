@@ -53,6 +53,9 @@ export const onRequestPost = async (context) => {
       body: JSON.stringify(body),
   })
   var data = await response.json();
+  if (data.payload == null) {
+    return new Response(JSON.stringify([]), init);
+  }
   data = data.payload.pageableCourse.courses;
 
   var importantData: any[] = [];
