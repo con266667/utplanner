@@ -38,7 +38,7 @@ export const onRequestPost = async (context) => {
 
   if (body.search) {
     body.courseCodeAndTitleProps = {
-      "courseCode": "",
+      "courseCode": body.search,
       "courseTitle": body.search,
       "courseSectionCode": "",
       "searchCourseDescription": true
@@ -60,6 +60,25 @@ export const onRequestPost = async (context) => {
 
   var importantData: any[] = [];
 
+  function dayNumToDay(dayNum: number) {
+    switch (dayNum) {
+      case 1:
+        return "Monday";
+      case 2:
+        return "Tuesday";
+      case 3:
+        return "Wednesday";
+      case 4:
+        return "Thursday";
+      case 5:
+        return "Friday";
+      case 6:
+        return "Saturday";
+      case 7:
+        return "Sunday";
+    }
+  }
+
   for (var i = 0; i < data.length; i++) {
     importantData.push({
       "code": data[i].code,
@@ -70,11 +89,11 @@ export const onRequestPost = async (context) => {
           "meetingTimes": section.meetingTimes.map((meetingTime) => {
             return {
               "start": {
-                "day": meetingTime.start.day,
+                "day": dayNumToDay(meetingTime.start.day),
                 "hour": meetingTime.start.millisofday / 3600000,
               },
               "end": {
-                "day": meetingTime.end.day,
+                "day": dayNumToDay(meetingTime.end.day),
                 "hour": meetingTime.end.millisofday / 3600000,
               },
               "building": meetingTime.building.buildingCode,
