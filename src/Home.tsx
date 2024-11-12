@@ -17,8 +17,8 @@ function Home() {
   const [searchedCourses, setSearchedCourses] = useState<any[]>([]); // [{code: "ESC180", title: "Introduction to Programming for Engineers", ...}
   const [selectedCourseCodes, setSelectedCourseCodes] = useLocalStorage<{[session:string]: string[]}>('selectedCourseCodes', {
     "Summer": [],
-    "20239": [],
-    "20241": []
+    "20249": [],
+    "20251": []
   });
   const [optimizationsDropdownOpen, setOptimizationsDropdownOpen] = useState<boolean>(false);
   const [selectedOptimization, setSelectedOptimization] = useLocalStorage<string>('selectedOptimization', "Late Start"); // "Late Start", "Early Finish", "Fewer Days"
@@ -161,8 +161,8 @@ function Home() {
         </div>
         <select className='session-dropdown' defaultValue={selectedSession} onChange={(e) => changeSession(e.target.value)}>
           <option value="Summer">Summer</option>
-          <option value="20239">Fall</option>
-          <option value="20241">Winter</option>
+          <option value="20249">Fall</option>
+          <option value="20251">Winter</option>
         </select>
       </div>
       <div className={`selected-courses ${(selectedCourseCodes[selectedSession] ?? []).length === 0 ? 'invisible' : ''}`} >

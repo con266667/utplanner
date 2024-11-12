@@ -162,7 +162,7 @@ export type Section = {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
       },
-      body: JSON.stringify({"courseCodeAndTitleProps":{"courseCode":courseCode,"courseTitle":"","courseSectionCode":""},"sessions":["20235F","20235S","20235", "20239", "20241", "20239-20241"],"divisions":["APSC","ARTSC","FPEH","MUSIC","ARCLA","ERIN","SCAR"],"direction":"asc"})
+      body: JSON.stringify({"courseCodeAndTitleProps":{"courseCode":courseCode,"courseTitle":"","courseSectionCode":""},"sessions":["20245F","20245S","20245", "20249", "20251", "20249-20251"],"divisions":["APSC","ARTSC","FPEH","MUSIC","ARCLA","ERIN","SCAR"],"direction":"asc"})
     });
     if (!res.ok) {
       throw new Error(`Failed to fetch course ${courseCode}`);

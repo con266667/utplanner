@@ -18,7 +18,7 @@ export const onRequestPost = async (context) => {
 
   // If sessions is not specified, set it to ["20239","20241","20239-20241"]
   if (!body.sessions) {
-    body.sessions = ["20239","20241","20239-20241"];
+    body.sessions = ["20249","20251","20249-20251"];
   }
 
   // If divisions is not specified, set it to ["APSC","ARTSC","FPEH","MUSIC","ARCLA"]

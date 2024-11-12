@@ -15,8 +15,8 @@ function Browse() {
     let nextPage = 1;
     const [selectedCourseCodes, setSelectedCourseCodes] = useLocalStorage<{[session:string]: string[]}>('selectedCourseCodes', {
         "Summer": [],
-        "20239": [],
-        "20241": []
+        "20249": [],
+        "20251": []
     });
     let [selectedSession, setSelectedSession] = useLocalStorage<string>('selectedSession', "Summer");
     const sessionRef = useRef<HTMLSelectElement>(null);
@@ -121,8 +121,8 @@ function Browse() {
                         updateCourses();
                     }} ref={sessionRef} defaultValue={selectedSession}>
                         <option value="Summer">Summer</option>
-                        <option value="20239">Fall</option>
-                        <option value="20241">Winter</option>
+                        <option value="20249">Fall</option>
+                        <option value="20251">Winter</option>
                     </select>
                 </div>
                 <div className="filter">

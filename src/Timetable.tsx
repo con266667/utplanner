@@ -12,8 +12,8 @@ const Timetable = forwardRef((props: any, ref: any) => {
     const navigate = useNavigate();
     let [events, setEvents] = useLocalStorage<{[session: string]: any[]}>('events', {
         "Summer": [],
-        "20239": [],
-        "20241": []
+        "20249": [],
+        "20251": []
     });
     let [dayViewSelectedDay, setDayViewSelectedDay] = useLocalStorage<number>('dayViewSelectedDay', 1);
     const [courseConfigurations, setCourseConfigurations] = useLocalStorage<{[key: string]: CourseConfiguration}>('courseConfigurations', {});
@@ -21,8 +21,8 @@ const Timetable = forwardRef((props: any, ref: any) => {
     const [selectedOptimization, setSelectedOptimization] = useLocalStorage<string>('selectedOptimization', "Late Start");
     const [selectedCourseCodes, setSelectedCourseCodes] = useLocalStorage<{[session:string]: string[]}>('selectedCourseCodes', {
         "Summer": [],
-        "20239": [],
-        "20241": []
+        "20249": [],
+        "20251": []
     });
     const [selectedSession, setSelectedSession] = useLocalStorage<string>('selectedSession', "Summer");
 
